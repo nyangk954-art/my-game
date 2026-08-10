@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>전용 스킬 대전 (Expanded Edition)</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #121212; color: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .container {
+      background-color: #1e1e1e; border: 2px solid #333; border-radius: 12px;
+      padding: 25px; width: 480px; text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6); position: relative;
+      overflow: hidden;
+    }
+    
+    /* 상단 관리자 기능 패널 */
+    .admin-bar {
+      position: absolute; top: 12px; right: 15px;
+      display: flex; gap: 4px; align-items: center; z-index: 5;
+    }
+    .admin-input {
+      width: 80px; padding: 4px 6px; font-size: 0.7rem;
+      background: #111; border: 1px solid #555; color: #fff; border-radius: 4px;
+    }
+    .admin-btn {
+      padding: 4px 6px; font-size: 0.7rem; font-weight: bold;
+      background: #34495e; color: #fff; border: none; border-radius: 4px;
+      cursor: pointer; margin-top: 0; width: auto;
+    }
+    .btn-admin-feature {
+      background: #e67e22; color: #fff; padding: 4px 6px; font-size: 0.7rem;
+      font-weight: bold; border-radius: 4px; border: none; cursor: pointer; display: none; margin-top: 0; width: auto;
+    }
+    .btn-coin-add { background: #27ae60 !important; }
+    .login-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.94);
+      display: flex; justify-content: center; align-items: center; z-index: 1000;
+      padding: 20px;
+    }
+    .login-box {
+      width: min(420px, 92vw); background: #1e1e1e; border: 2px solid #444;
+      border-radius: 12px; padding: 24px; text-align: center; box-shadow: 0 10px 35px rgba(0,0,0,.7);
+    }
+    .login-box h2 { color: #f39c12; margin-bottom: 8px; }
+    .login-box p { color: #aaa; font-size: .85rem; margin-bottom: 14px; }
+    .login-input {
+      width: 100%; padding: 11px; margin: 5px 0; border-radius: 6px; border: 1px solid #555;
+      background: #111; color: #fff; outline: none;
+    }
+    .login-main-btn { background: #3498db; }
+    .login-signup-btn { background: #8e44ad; }
+    .login-status { min-height: 20px; margin-top: 8px; font-size: .82rem; font-weight: bold; }
+    .online-user { font-size: .78rem; color: #aaa; margin-top: 6px; }
+
+    h1 { font-size: 1.5rem; margin-bottom: 15px; margin-top: 10px; color: #f39c12; }
+    .logout-btn { background:#7f8c8d; width:auto; padding:6px 10px; font-size:.78rem; margin-top:0; }
+    .coin-display {
+      background-color: #2c2c2c; padding: 10px; border-radius: 8px;
+      font-size: 1.1rem; font-weight: bold; color: #f1c40f;
+      margin-bottom: 15px; border: 1px solid #444;
+    }
+    .section-box {
+      background-color: #2a2a2a; border-radius: 8px; padding: 15px;
+      margin-bottom: 15px; border: 1px solid #444;
+    }
+    .weapon-icon { font-size: 3.5rem; margin-bottom: 5px; }
+    .job-title { font-size: 0.95rem; color: #3498db; font-weight: bold; }
+    .weapon-name { font-size: 1.3rem; font-weight: bold; color: #e74c3c; }
+    .weapon-level { color: #f1c40f; font-weight: bold; }
+    .stat-box {
+      margin-top: 10px; font-size: 0.9rem; text-align: left;
+      background: #181818; padding: 10px; border-radius: 6px;
+    }
+    .stat-item { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .skill-list {
+      margin-top: 8px; padding-top: 8px; border-top: 1px dashed #444;
+      font-size: 0.85rem; color: #2ecc71;
+    }
+    button {
+      width: 100%; padding: 10px; font-size: 0.95rem; font-weight: bold;
+      color: white; border: none; border-radius: 6px; cursor: pointer;
+      transition: background 0.2s, transform 0.1s; margin-top: 6px;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { background-color: #555 !important; cursor: not-allowed; opacity: 0.5; }
+    .btn-draw { background-color: #9b59b6; }
+    .btn-enhance { background-color: #e67e22; }
+    .btn-battle-group { display: flex; gap: 10px; }
+    .btn-battle { background-color: #e74c3c; flex: 1; }
+    
+    .btn-extra-feature { background-color: #16a085; font-size: 0.85rem; padding: 8px; margin-top: 4px; }
+    .friendly-modal-btn { background-color: #16a085 !important; color: #fff !important; border: 1px solid #2ecc71 !important; font-weight: bold; }
+    .friendly-create-btn { background-color: #2980b9 !important; }
+    .friendly-join-btn { background-color: #16a085 !important; }
+    .friendly-close-btn { background-color: #666 !important; }
+
+    .log { margin-top: 10px; font-size: 0.9rem; min-height: 24px; font-weight: bold; }
+    .success { color: #2ecc71; }
+    .fail { color: #e74c3c; }
+    .warning { color: #e67e22; }
+
+    .modal-overlay {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); border-radius: 12px;
+      justify-content: center; align-items: center; z-index: 50;
+    }
+    .modal-content {
+      background: #222; padding: 20px; border-radius: 10px;
+      border: 2px solid #f1c40f; text-align: center; width: 90%; max-height: 90%; overflow-y: auto;
+    }
+    .job-select-btn {
+      background: #34495e; margin: 5px 0; text-align: left; padding: 8px 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .job-select-btn:hover { background: #2c3e50; }
+
+    .battle-screen {
+      display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: #151515; border-radius: 12px; padding: 20px; z-index: 20;
+      flex-direction: column; justify-content: space-between;
+    }
+    .battle-header {
+      font-size: 1.2rem; font-weight: bold; color: #e74c3c;
+      border-bottom: 2px solid #333; padding-bottom: 8px;
+    }
+    .combatant-box {
+      background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; margin: 6px 0;
+    }
+    
+    .hp-bar-outer {
+      width: 100%; height: 16px; background-color: #444; border-radius: 8px;
+      overflow: hidden; margin-top: 6px; display: flex;
+    }
+    .hp-bar-inner {
+      height: 100%; width: 100%; background-color: #2ecc71; transition: width 0.3s ease-out;
+    }
+    .shield-bar-inner {
+      height: 100%; width: 0%; background-color: #7f8c8d; transition: width 0.3s ease-out;
+    }
+
+    .stack-badge {
+      font-size: 0.75rem; background: #333; padding: 2px 6px; border-radius: 4px; color: #f1c40f; margin-left: 4px;
+    }
+
+    .battle-actions { display: flex; flex-direction: column; gap: 4px; }
+    .action-row { display: flex; gap: 6px; }
+    .btn-act { flex: 1; padding: 10px 5px; font-size: 0.8rem; }
+    .btn-basic { background-color: #7f8c8d; }
+    .btn-sk1 { background-color: #3498db; }
+    .btn-sk2 { background-color: #9b59b6; }
+    .btn-sk3 { background-color: #e67e22; }
+
+    .dmg-toast {
+      display: none; position: absolute; top: 45%; left: 50%;
+      transform: translate(-50%, -50%); background: rgba(10, 10, 10, 0.95);
+      border: 2px solid #e74c3c; color: #fff; padding: 15px; border-radius: 10px;
+      z-index: 60; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; width: 85%;
+    }
+    .toast-title { font-size: 1.15rem; font-weight: bold; color: #f1c40f; margin-bottom: 4px; }
+    .toast-desc { font-size: 0.85rem; color: #ccc; margin-top: 4px; }
+    .battle-history-log {
+      background: #0d0d0d; border: 1px solid #333; border-radius: 6px;
+      height: 75px; overflow-y: auto; padding: 8px; font-size: 0.8rem; text-align: left; color: #aaa;
+    }
+
+    .instant-death-effect {
+      animation: deathShake 0.5s infinite, deathBgFlash 1s forwards;
+      border: 3px solid #8e44ad !important;
+    }
+    @keyframes deathShake {
+      0% { transform: translate(-50%, -50%) translate(0, 0); }
+      20% { transform: translate(-50%, -50%) translate(-10px, 10px); }
+      40% { transform: translate(-50%, -50%) translate(10px, -10px); }
+      60% { transform: translate(-50%, -50%) translate(-10px, -10px); }
+      80% { transform: translate(-50%, -50%) translate(10px, 10px); }
+      100% { transform: translate(-50%, -50%) translate(0, 0); }
+    }
+    @keyframes deathBgFlash {
+      0% { background: rgba(0, 0, 0, 0.95); }
+      50% { background: rgba(142, 68, 173, 0.9); box-shadow: 0 0 30px #8e44ad; }
+      100% { background: rgba(20, 0, 30, 0.98); }
+    }
+    .skull-icon {
+      font-size: 3rem; display: inline-block;
+      animation: skullPulse 0.5s infinite alternate;
+    }
+    @keyframes skullPulse {
+      from { transform: scale(1); color: #8e44ad; }
+      to { transform: scale(1.3); color: #e74c3c; }
+    }
+  
+    .skill-help-btn {
+      margin: 10px 0 4px;
+      padding: 9px 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      background: rgba(255,255,255,.08);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .skill-help-btn:hover { background: rgba(255,255,255,.14); }
+    .skill-help-modal {
+      position: fixed; inset: 0; z-index: 100000;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+      padding: 18px;
+    }
+    .skill-help-content {
+      width: min(560px, 94vw);
+      max-height: 82vh; overflow: auto;
+      padding: 22px;
+      border-radius: 18px;
+      background: #111522;
+      border: 1px solid rgba(255,255,255,.15);
+      box-shadow: 0 24px 80px rgba(0,0,0,.55);
+    }
+    .skill-help-content h2 { margin-top: 0; }
+    .skill-help-row {
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,.09);
+    }
+    .skill-help-row:last-child { border-bottom: 0; }
+    .skill-help-name { font-weight: 800; font-size: 16px; }
+    .skill-help-desc { margin-top: 4px; line-height: 1.5; opacity: .9; }
+    .skill-help-close {
+      width: 100%; margin-top: 14px; padding: 10px;
+      border: 0; border-radius: 10px; cursor: pointer;
+      font-weight: 800;
+    }
+    .weapon-effect-note {
+      margin-top: 10px; padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255, 100, 40, .08);
+      border: 1px solid rgba(255, 100, 40, .22);
+      line-height: 1.5;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="login-overlay" class="login-overlay">
+    <div class="login-box">
+      <h2>⚔️ 게임 로그인</h2>
+      <p>아이디와 비밀번호로 로그인해야 게임에 들어갈 수 있습니다.</p>
+      <input id="login-username" class="login-input" autocomplete="username" placeholder="아이디" maxlength="20">
+      <input id="login-password" type="password" class="login-input" autocomplete="current-password" placeholder="비밀번호" maxlength="64">
+      <button id="btn-login" class="login-main-btn">로그인</button>
+      <button id="btn-signup" class="login-signup-btn">새 계정 만들기</button>
+      <div id="login-status" class="login-status"></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="admin-bar">
+      <input type="password" id="admin-code-input" class="admin-input" placeholder="코드 입력" />
+      <button id="btn-admin-submit" class="admin-btn">확인</button>
+      <button id="btn-add-coins" class="btn-admin-feature btn-coin-add" style="display:none;">💰 +10,000</button>
+      <button id="btn-change-job" class="btn-admin-feature" style="display:none;">🔄 직업 변경</button>
+    </div>
+
+    <h1>⚔️ 전용 스킬 대전</h1>
+
+    <div class="coin-display" style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;">
+      <span>💰 보유 코인: <span id="user-coins">1,000</span> G</span>
+      <button id="btn-logout" class="logout-btn">🚪 로그아웃</button>
+    </div>
+
+    <div id="draw-section" class="section-box">
+      <p style="margin-bottom: 10px;">운명의 직업을 배정받으세요!</p>
+      <button id="btn-draw" class="btn-draw">🎲 직업 배정받기 (1회 한정)</button>
+    </div>
+
+    <div id="main-game" style="display: none;">
+      <div class="section-box">
+        <div id="job-title" class="job-title">미숙한 검사</div>
+        <div id="weapon-icon" class="weapon-icon">⚔️</div>
+        <div class="weapon-name">
+          <span id="weapon-name">검</span>
+          <span id="weapon-level" class="weapon-level">+1</span>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-item">
+            <span>체력 (HP)</span>
+            <span id="stat-hp" style="color: #2ecc71; font-weight: bold;">500</span>
+          </div>
+          <div class="stat-item">
+            <span>공격력</span>
+            <span id="stat-atk" style="color: #e74c3c; font-weight: bold;">15</span>
+          </div>
+          <div class="skill-list" id="skill-list"></div>
+        </div>
+
+        <button id="btn-enhance" class="btn-enhance">강화 시도</button>
+      </div>
+
+      <div class="section-box">
+        <div class="btn-battle-group">
+          <button id="btn-battle" class="btn-battle">⚔️ 일반 전투 입장</button>
+        </div>
+        <button id="btn-open-achievement" class="btn-extra-feature">🏆 업적 및 도감 확인</button>
+        <button id="btn-open-ranking" class="btn-extra-feature">🌐 온라인 랭킹</button>
+        <button id="btn-open-friendly" class="btn-extra-feature">⚔️ 친선전</button>
+        <div id="online-user" class="online-user"></div>
+      </div>
+    </div>
+
+    <div id="log" class="log"></div>
+
+    <div id="job-select-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="color:#f1c40f; margin-bottom:10px;">👑 원하는 직업을 선택하세요</h2>
+        <div id="job-option-list"></div>
+      </div>
+    </div>
+
+    <div id="ranking-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="color:#f1c40f; margin-bottom:10px;">🌐 온라인 랭킹</h2>
+        <div id="ranking-list" style="text-align:left; font-size:.9rem; margin-bottom:12px;"></div>
+        <button id="btn-ranking-close" style="background:#f1c40f;color:#111;">닫기</button>
+      </div>
+    </div>
+
+    <div id="friendly-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="color:#f1c40f; margin-bottom:10px;">⚔️ 친선전</h2>
+        <p style="font-size:.85rem; color:#ccc; margin-bottom:10px;">방을 만들거나 친구가 만든 코드를 입력하세요.</p>
+        <button id="btn-friendly-create" class="friendly-modal-btn friendly-create-btn" style="margin-bottom:8px;">🏠 방 만들기</button>
+        <input id="friendly-code-input" class="login-input" maxlength="6" inputmode="numeric" placeholder="6자리 방 코드">
+        <button id="btn-friendly-join" class="friendly-modal-btn friendly-join-btn" style="margin-top:6px;">🚪 방 참가</button>
+        <div id="friendly-status" class="login-status" style="margin-top:10px;"></div>
+        <button id="btn-friendly-close" class="friendly-modal-btn friendly-close-btn" style="margin-top:10px;">닫기</button>
+      </div>
+    </div>
+
+    <div id="achievement-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="color:#f1c40f; margin-bottom:10px;">🏆 업적 및 도감</h2>
+        <div id="achievement-list" style="text-align: left; font-size: 0.85rem; margin-bottom: 15px;"></div>
+        <button id="btn-ach-close" style="background-color: #f1c40f; color: #111;">닫기</button>
+      </div>
+    </div>
+
+    <div id="battle-screen" class="battle-screen">
+      <div class="battle-header" id="battle-mode-title">⚔️ 1v1 결투</div>
+
+      <div class="combatant-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <div>
+            <span id="enemy-name" style="color: #e74c3c; font-weight: bold;">전투 봇</span>
+            <span id="enemy-extra-stack" class="stack-badge"></span>
+          </div>
+          <span id="enemy-hp-text">100 / 100</span>
+        </div>
+        <div class="hp-bar-outer">
+          <div id="enemy-hp-bar" class="hp-bar-inner"></div>
+          <div id="enemy-shield-bar" class="shield-bar-inner"></div>
+        </div>
+      </div>
+
+      <div id="battle-history-log" class="battle-history-log"></div>
+
+      <div class="combatant-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem;">
+          <div>
+            <span id="player-battle-name" style="color: #2ecc71; font-weight: bold;">플레이어</span>
+            <span id="player-extra-stack" class="stack-badge"></span>
+          </div>
+          <span id="player-hp-text">100 / 100</span>
+        </div>
+        <div class="hp-bar-outer">
+          <div id="player-hp-bar" class="hp-bar-inner"></div>
+          <div id="player-shield-bar" class="shield-bar-inner"></div>
+        </div>
+      </div>
+
+      <div class="battle-actions">
+        <button id="btn-act-basic" class="btn-act btn-basic">⚔️ 일반 공격 (0회)</button>
+        <div class="action-row">
+          <button id="btn-act-sk1" class="btn-act btn-sk1">스킬 1 (일반공격 1회 필요)</button>
+          <button id="btn-act-sk2" class="btn-act btn-sk2">스킬 2 (일반공격 3회 필요)</button>
+          <button id="btn-act-sk3" class="btn-act btn-sk3">스킬 3 (일반공격 5회 필요)</button>
+        </div>
+      </div>
+
+      <div id="dmg-toast" class="dmg-toast">
+        <div id="toast-title" class="toast-title">스킬명</div>
+        <div id="toast-body">데미지 연출</div>
+        <div id="toast-desc" class="toast-desc">스킬 설명</div>
+      </div>
+    </div>
+</div>
+
+
+  <div id="skill-help-modal" class="skill-help-modal">
+    <div class="skill-help-content">
+      <h2 id="skill-help-title">📖 스킬 설명</h2>
+      <div id="skill-help-list"></div>
+      <button id="btn-skill-help-close" class="skill-help-close">닫기</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase compat SDK를 사용해 모바일/일부 브라우저의 ES module import 문제를 피합니다.
+    const firebaseConfig = {
+      apiKey: "AIzaSyBpkAbwpb0WlGCIwexlq0JuPuUM0xqRMss",
+      authDomain: "makeagame-c6af0.firebaseapp.com",
+      projectId: "makeagame-c6af0",
+      storageBucket: "makeagame-c6af0.firebasestorage.app",
+      messagingSenderId: "548377808924",
+      appId: "1:548377808924:web:906f92db4a43d459cd0fd9",
+      measurementId: "G-6X5X02G6KP"
+    };
+
+    window.firebaseReady = false;
+    window.firebaseInitError = null;
+    window.firebaseInitPromise = (async () => {
+      try {
+        if (typeof firebase === 'undefined') throw new Error('Firebase SDK가 로드되지 않았습니다. gstatic.com 접근을 확인해주세요.');
+        const firebaseApp = firebase.apps.length ? firebase.app() : firebase.initializeApp(firebaseConfig);
+        const firebaseAuth = firebase.auth();
+        const firebaseDb = firebase.firestore();
+
+        const orderBy = (field, direction = 'asc') => ({ __type: 'orderBy', field, direction });
+        const limit = (count) => ({ __type: 'limit', count });
+        const query = (ref, ...constraints) => {
+          let q = ref;
+          for (const c of constraints) {
+            if (c && c.__type === 'orderBy') q = q.orderBy(c.field, c.direction);
+            else if (c && c.__type === 'limit') q = q.limit(c.count);
+          }
+          return q;
+        };
+
+        window.firebaseGame = {
+          firebaseAuth, firebaseDb,
+          signInWithEmailAndPassword: (auth, email, password) => auth.signInWithEmailAndPassword(email, password),
+          createUserWithEmailAndPassword: (auth, email, password) => auth.createUserWithEmailAndPassword(email, password),
+          signOut: (auth) => auth.signOut(),
+          onAuthStateChanged: (auth, callback) => auth.onAuthStateChanged(callback),
+          setPersistence: async (auth, persistence) => auth.setPersistence(persistence === 'local' ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.NONE),
+          inMemoryPersistence: 'none',
+          browserLocalPersistence: 'local',
+          doc: (db, collectionName, id) => db.collection(collectionName).doc(id),
+          getDoc: (ref) => ref.get(),
+          setDoc: (ref, data, options) => ref.set(data, options || {}),
+          collection: (db, collectionName) => db.collection(collectionName),
+          query, orderBy, limit,
+          getDocs: (q) => q.get()
+        };
+
+        // 로그인 세션을 브라우저에 유지합니다.
+        // 새로고침/페이지 재방문 후에도 같은 Firebase 계정을 유지해야
+        // Firestore의 계정별 데이터를 다시 불러올 수 있습니다.
+        try {
+          await window.firebaseGame.setPersistence(firebaseAuth, window.firebaseGame.browserLocalPersistence);
+        } catch (persistenceError) {
+          console.warn('Firebase 로컬 persistence 설정 실패:', persistenceError);
+          // persistence 설정 실패 시에도 Firebase 자체는 사용할 수 있도록 계속 진행합니다.
+        }
+        window.firebaseReady = true;
+        window.dispatchEvent(new Event('firebase-ready'));
+        return true;
+      } catch (error) {
+        console.error('Firebase 초기화 실패:', error);
+        window.firebaseReady = false;
+        window.firebaseInitError = (error && (error.stack || error.message)) || String(error);
+        window.dispatchEvent(new CustomEvent('firebase-error', { detail: { message: window.firebaseInitError, code: error?.code || '', name: error?.name || '' } }));
+        return false;
+      }
+    })();
+  </script>
+
+  <script>
+    const JOBS = [
+      {
+        id: 'sword', jobBaseName: '검사', isHighDmg: true, icon: '⚔️', weaponName: '검', baseHp: 500, baseAtk: 18, atkPerLevel: 6,
+        skills: [
+          { name: '연속 베기', desc: '3연속 벤다 (1타당 일반 공격의 40% 데미지)' },
+          { name: '검기 방출', desc: '독 데미지로 남은 체력의 40% + 일반 공격의 60% 데미지' },
+          { name: '용의 격노', desc: '상대 현재 체력의 25% + 일반 공격력의 80%를 피해로 입힙니다.' }
+        ]
+      },
+      {
+        id: 'fire_sword', jobBaseName: '화염의 검사', isHighDmg: true, icon: '🔥', weaponName: '화염검', baseHp: 500, baseAtk: 16, atkPerLevel: 5,
+        skills: [
+          { name: '화염 폭발', desc: '이번 턴엔 1 데미지를 주고 다음 턴 상대 최대 체력의 15% 피해' },
+          { name: '융해', desc: '상대 무기가 녹아 다음 턴에 일반 공격 데미지의 10%만 부여' },
+          { name: '종말의 화염', desc: '상대 남은 체력의 30%를 깎음' }
+        ]
+      },
+      {
+        id: 'ice_sword', jobBaseName: '빙결의 검사', isHighDmg: true, icon: '❄️', weaponName: '얼음검', baseHp: 500, baseAtk: 15, atkPerLevel: 5,
+        skills: [
+          { name: '빙결 지대', desc: '일반 공격의 85% 데미지 + 다음 턴 상대 스킬 적중률 40%' },
+          { name: '절대 0도', desc: '80% 확률로 일반 공격의 2.73배 압축 피해' },
+          { name: '빙하의 서약', desc: '100% 확률로 다음 턴 행동 불가' }
+        ]
+      },
+      {
+        id: 'bow', jobBaseName: '궁수', isHighDmg: true, icon: '🏹', weaponName: '활', baseHp: 400, baseAtk: 16, atkPerLevel: 5,
+        skills: [
+          { name: '조준 사격', desc: '상대를 정확히 조준하여 일반 공격의 180% 데미지' },
+          { name: '인챈트된 실명의 화살', desc: '상대방을 실명시켜 다음 스킬 적중률을 10%로 만듦' },
+          { name: '큐피트의 화살', desc: '상대를 홀려 다음 턴에 자신을 공격하게 함' }
+        ]
+      },
+      {
+        id: 'lightning_spear', jobBaseName: '전광의 무인', isHighDmg: false, icon: '⚡', weaponName: '번개창', baseHp: 670, baseAtk: 13, atkPerLevel: 5,
+        skills: [
+          { name: '감전 강화', desc: '상대방을 감전시켜 일반 공격력의 2.2배 피해' },
+          { name: '낙뢰 소환', desc: '다음 턴 20% 확률로 무효 (상대가 검사라면 95% 확률로 무효)' },
+          { name: '뇌신의 심판', desc: '체력 30%를 깎고, 90% 확률로 남은 체력의 30% 추가 타격 (이후 85%, 80% 확률로 연속 전개)' }
+        ]
+      },
+      {
+        id: 'wand', jobBaseName: '마법사', isHighDmg: false, icon: '🪄', weaponName: '마법봉', baseHp: 550, baseAtk: 9, atkPerLevel: 6,
+        skills: [
+          { name: '마력 증폭', desc: '체력 10% 소모, 다음 턴 일반 공격 데미지의 220% 부여' },
+          { name: '혼돈의 주문', desc: '랜덤 마법 발동 (불 / 회복 / 물)' },
+          { name: '구원의 마법', desc: '부활 스택 중첩' }
+        ]
+      },
+      {
+        id: 'scythe', jobBaseName: '저주의 사신', isHighDmg: false, icon: '💀', weaponName: '저주의 낫', baseHp: 666, baseAtk: 14, atkPerLevel: 5,
+        skills: [
+          { name: '영혼 흡수', desc: '상대 체력의 10%를 흡수하여 체력 회복' },
+          { name: '사신의 저주', desc: '사신의 보호막을 형성하여 피해 감소 및 방어' },
+          { name: '명계의 문', desc: '25% 확률로 즉사' }
+        ]
+      },
+      {
+        id: 'assassin', jobBaseName: '암살자', isHighDmg: true, icon: '🗡️', weaponName: '단검', baseHp: 450, baseAtk: 20, atkPerLevel: 6,
+        skills: [
+          { name: '기습', desc: '은밀하게 다가와 일반 공격의 150% 데미지를 줍니다.' },
+          { name: '독성 가루', desc: '상대에게 독을 뿌려 지속적인 데미지를 가합니다.' },
+          { name: '그림자 분신', desc: '분신을 생성하여 다음 턴 적의 공격을 회피하고 반격합니다.' }
+        ]
+      },
+      // 신규 추가 직업 1: 광전사
+      {
+        id: 'berserker', jobBaseName: '광전사', isHighDmg: true, icon: '🪓', weaponName: '전투 도끼', baseHp: 570, baseAtk: 16, atkPerLevel: 6,
+        skills: [
+          { name: '피의 갈증', desc: '자신의 체력을 15% 소모하고 대량의 피해를 줍니다.' },
+          { name: '광란의 도약', desc: '적에게 도약하여 강한 타격을 입히고 방어력을 낮춥니다.' },
+          { name: '불굴의 투지', desc: '잠시동안 모든 공격에 대항하여 반사 대미지를 얻습니다.' }
+        ]
+      },
+      // 신규 추가 직업 2: 성기사
+      {
+        id: 'paladin', jobBaseName: '성기사', isHighDmg: false, icon: '🛡️', weaponName: '신성한 방패와 검', baseHp: 800, baseAtk: 13, atkPerLevel: 5,
+        skills: [
+          { name: '신성한 일격', desc: '방어력에 비례한 신성한 피해를 줍니다.' },
+          { name: '수호의 결계', desc: '대형 보호막을 전개하여 아군의 생존력을 극대화합니다.' },
+          { name: '천상의 심판', desc: '상대의 현재 체력 비례 강력한 신성 피해를 입힙니다.' }
+        ]
+      }
+    ];
+
+
+    // ===== 1단계 강화 밸런스 =====
+    // +0→+1 ... +24→+25 비용
+    const UPGRADE_COSTS = [
+      800, 1200, 1800, 2600, 3800,
+      5500, 8000, 12000, 18000, 27000,
+      40000, 60000, 90000, 135000, 200000,
+      300000, 450000, 650000, 900000, 1200000,
+      1600000, 2100000, 2800000, 3800000, 5000000
+    ];
+
+    // +0→+1 ... +24→+25 성공 확률
+    const SUCCESS_RATES = [
+      100, 100, 95, 92, 88,
+      82, 75, 68, 60, 52,
+      44, 36, 28, 20, 12,
+      10, 9, 8, 7, 6,
+      5, 4, 3, 2, 1
+    ];
+
+    
+const STARTING_GOLD = 35000;
+
+const ARCHER_SPECIALS = {
+  2:{name:'정밀 조준',desc:'일반 공격 시 공격력의 5% 추가 피해',bonus:0.05,chance:1},
+  5:{name:'관통 화살',desc:'일반 공격 시 공격력의 10% 추가 피해',bonus:0.10,chance:1},
+  8:{name:'연사',desc:'20% 확률로 추가 화살 피해',bonus:0.35,chance:0.20},
+  10:{name:'독화살',desc:'20% 확률로 4초간 지속 피해',dotPercent:0.02,dotTicks:8,tickMs:500,chance:0.20},
+  12:{name:'급소 사격',desc:'일반 공격 시 공격력의 20% 추가 피해',bonus:0.20,chance:1},
+  15:{name:'폭발 화살',desc:'17% 확률로 공격력의 100% 추가 피해',bonus:1.00,chance:0.17},
+  18:{name:'연속 사격',desc:'15% 확률로 추가 피해가 한 번 더 발동',bonus:0.60,chance:0.15,repeatChance:1},
+  20:{name:'천공의 화살',desc:'13% 확률로 공격력의 150% 추가 피해',bonus:1.50,chance:0.13},
+  22:{name:'폭우의 화살',desc:'13% 확률로 공격력의 200% 추가 피해',bonus:2.00,chance:0.13},
+  24:{name:'멸망의 화살',desc:'12% 확률로 공격력의 250% 추가 피해',bonus:2.50,chance:0.12},
+  25:{name:'신궁의 일격',desc:'10% 확률로 공격력의 300% 추가 피해',bonus:3.00,chance:0.10}
+};
+function getArcherSpecial(level){
+  let active=null;
+  Object.keys(ARCHER_SPECIALS).map(Number).sort((a,b)=>a-b).forEach(n=>{if(level>=n) active={threshold:n,...ARCHER_SPECIALS[n]};});
+  return active;
+}
+function triggerArcherSpecial(attacker, defender, log=true){
+  if(attacker.job.id!=='bow') return 0;
+  const sp=getArcherSpecial(attacker.level);
+  if(!sp || !sp.chance || Math.random()>sp.chance) return 0;
+  const bonus=(attacker.atk||0)*(sp.bonus||0);
+  if(log) showSpecialPopup('🏹 '+sp.name, sp.desc);
+  return bonus;
+}
+
+const LIGHTNING_SPEAR_SPECIALS = {
+  2:{name:'전격의 흔적',desc:'일반 공격 시 공격력의 5% 추가 번개 피해',bonus:0.05,chance:1},
+  5:{name:'뇌광의 각인',desc:'일반 공격 시 공격력의 10% 추가 번개 피해',bonus:0.10,chance:1},
+  8:{name:'번개 폭발',desc:'20% 확률로 공격력의 30% 추가 번개 피해',bonus:0.30,chance:0.20},
+  10:{name:'감전의 낙인',desc:'20% 확률로 상대의 다음 행동을 무효화',bonus:0,chance:0.20,stun:true},
+  12:{name:'뇌전 강화',desc:'일반 공격 시 공격력의 20% 추가 번개 피해',bonus:0.20,chance:1},
+  15:{name:'천둥의 심판',desc:'17% 확률로 공격력의 100% 추가 번개 피해',bonus:1.00,chance:0.17},
+  18:{name:'연쇄 번개',desc:'15% 확률로 추가 번개 피해가 한 번 더 발동',bonus:0.70,chance:0.15,repeatChance:1},
+  20:{name:'뇌신의 창',desc:'13% 확률로 공격력의 150% 추가 번개 피해',bonus:1.50,chance:0.13},
+  22:{name:'천뢰',desc:'13% 확률로 공격력의 200% 추가 번개 피해',bonus:2.00,chance:0.13},
+  24:{name:'멸뢰',desc:'12% 확률로 공격력의 250% 추가 번개 피해',bonus:2.50,chance:0.12},
+  25:{name:'뇌신의 종언',desc:'10% 확률로 공격력의 300% 추가 번개 피해 + 다음 행동 무효화',bonus:3.00,chance:0.10,stun:true}
+};
+function getLightningSpearSpecial(level){
+  let active=null;
+  Object.keys(LIGHTNING_SPEAR_SPECIALS).map(Number).sort((a,b)=>a-b).forEach(n=>{if(level>=n) active={threshold:n,...LIGHTNING_SPEAR_SPECIALS[n]};});
+  return active;
+}
+function triggerLightningSpearSpecial(attacker, defender){
+  if(!attacker || attacker.job?.id!=='lightning_spear') return {extra:0,name:null,probabilistic:false};
+  const e=getLightningSpearSpecial(attacker.level);
+  if(!e || Math.random() > (e.chance ?? 1)) return {extra:0,name:e?.name||null,probabilistic:false};
+  let extra=Math.floor((attacker.atk||0)*(e.bonus||0));
+  if(e.repeatChance && Math.random()<e.repeatChance) extra += Math.floor((attacker.atk||0)*(e.bonus||0));
+  if(e.stun) defender.skipTurnCount=1;
+  return {extra,name:e.name,chance:e.chance??1,probabilistic:(e.chance??1)<1,stun:!!e.stun};
+}
+
+const FIRE_SWORD_SPECIALS = {
+  2:  {name:'불씨의 흔적', desc:'일반 공격 시 공격력의 5% 추가 화염 피해', bonus:0.05, chance:1},
+  5:  {name:'홍염의 각인', desc:'일반 공격 시 공격력의 10% 추가 화염 피해', bonus:0.10, chance:1},
+  8:  {name:'작열의 파편', desc:'20% 확률로 공격력의 20% 추가 화염 피해', bonus:0.20, chance:0.20},
+  10: {name:'타오르는 낙인', desc:'20% 확률로 3초 동안 0.5초마다 50씩 지속 화염 피해 (총 300)', bonus:0.20, chance:0.20, dot:50, dotTicks:6, tickMs:500},
+  12: {name:'홍련의 잔광', desc:'추가 화염 피해가 공격력의 20%로 강화', bonus:0.20, chance:1},
+  15: {name:'화신의 권능', desc:'20% 확률로 공격력의 40% 추가 화염 피해', bonus:0.40, chance:0.20},
+  18: {name:'멸화의 인장', desc:'20% 확률로 화염 추가 피해 발동', bonus:0.40, chance:0.20, repeatChance:0.30},
+  20: {name:'태초의 불꽃', desc:'15% 확률로 공격력의 100% 추가 화염 피해', bonus:1.00, chance:0.15},
+  22: {name:'지옥불의 심장', desc:'13% 확률로 공격력의 150% 추가 화염 피해를 입히고 5초간 화상 (0.5초마다 최대 HP의 3% 피해)', bonus:1.50, chance:0.13, dotPercent:0.03, dotTicks:10, tickMs:500},
+  24: {name:'홍련 폭주', desc:'12% 확률로 공격력의 200% 추가 화염 피해', bonus:2.00, chance:0.12},
+  25: {name:'종언의 태양', desc:'10% 확률로 4초간 화상 (0.5초마다 최대 HP의 3% 피해)', bonus:0, chance:0.10, dotPercent:0.03, dotTicks:8, tickMs:500}
+};
+function getFireSwordSpecial(level){
+  let active=null;
+  Object.keys(FIRE_SWORD_SPECIALS).map(Number).sort((a,b)=>a-b).forEach(n=>{
+    if(level>=n) active={threshold:n,...FIRE_SWORD_SPECIALS[n]};
+  });
+  return active;
+}
+const SWORD_SPECIALS = {
+  2:  {name:'검기 연마', desc:'일반 공격 시 공격력의 5% 추가 물리 피해', bonus:0.05, chance:1},
+  5:  {name:'강철의 의지', desc:'일반 공격 시 공격력의 10% 추가 물리 피해', bonus:0.10, chance:1},
+  8:  {name:'검풍', desc:'20% 확률로 공격력의 25% 추가 물리 피해', bonus:0.25, chance:0.20},
+  10: {name:'파쇄의 일격', desc:'20% 확률로 공격력의 50% 추가 물리 피해', bonus:0.50, chance:0.20},
+  12: {name:'날카로운 검날', desc:'추가 물리 피해가 공격력의 20%로 강화', bonus:0.20, chance:1},
+  15: {name:'검압 폭발', desc:'17% 확률로 공격력의 100% 추가 물리 피해', bonus:1.00, chance:0.17},
+  18: {name:'연속 검격', desc:'15% 확률로 추가 피해가 한 번 더 발동', bonus:0.60, chance:0.15, repeatChance:1},
+  20: {name:'극검', desc:'13% 확률로 공격력의 150% 추가 물리 피해', bonus:1.50, chance:0.13},
+  22: {name:'천검', desc:'13% 확률로 공격력의 200% 추가 물리 피해', bonus:2.00, chance:0.13},
+  24: {name:'멸검', desc:'12% 확률로 공격력의 250% 추가 물리 피해', bonus:2.50, chance:0.12},
+  25: {name:'종결의 검', desc:'10% 확률로 공격력의 400% 추가 물리 피해', bonus:4.00, chance:0.10}
+};
+function getSwordSpecial(level){
+  let active=null;
+  Object.keys(SWORD_SPECIALS).map(Number).sort((a,b)=>a-b).forEach(n=>{ if(level>=n) active={threshold:n,...SWORD_SPECIALS[n]}; });
+  return active;
+}
+function triggerSwordSpecial(attacker){
+  if(!attacker || attacker.job?.id!=='sword') return {extra:0,name:null,probabilistic:false};
+  const e=getSwordSpecial(attacker.level);
+  if(!e || Math.random() > (e.chance ?? 1)) return {extra:0,name:e?.name||null,probabilistic:false};
+  let extra=Math.floor(attacker.atk*(e.bonus||0));
+  if(e.repeatChance && Math.random()<e.repeatChance) extra += Math.floor(attacker.atk*(e.bonus||0));
+  return {extra,name:e.name,chance:e.chance ?? 1,probabilistic:(e.chance ?? 1)<1};
+}
+const ICE_SWORD_SPECIALS = {
+  2:  {name:'서리의 흔적', desc:'일반 공격 시 공격력의 5% 추가 냉기 피해', bonus:0.05, chance:1},
+  5:  {name:'빙점의 각인', desc:'일반 공격 시 공격력의 10% 추가 냉기 피해', bonus:0.10, chance:1},
+  8:  {name:'서리 폭발', desc:'20% 확률로 공격력의 25% 추가 냉기 피해', bonus:0.25, chance:0.20},
+  10: {name:'동결의 낙인', desc:'20% 확률로 상대 다음 스킬 적중률 50%', bonus:0.15, chance:0.20, accuracy:0.5},
+  12: {name:'빙결의 잔상', desc:'추가 냉기 피해가 공격력의 20%로 강화', bonus:0.20, chance:1},
+  15: {name:'혹한의 심장', desc:'20% 확률로 상대 최대 HP의 10% 추가 냉기 피해', hpPercent:0.10, chance:0.20},
+  18: {name:'절대영점', desc:'15% 확률로 추가 냉기 피해가 2배로 발동', bonus:0.40, chance:0.15},
+  20: {name:'영구동토', desc:'13% 확률로 상대를 1턴 동안 빙결', bonus:0.50, chance:0.13, freeze:true},
+  22: {name:'극한빙점', desc:'13% 확률로 공격력의 150% 추가 냉기 피해 + 최대 HP의 5% 피해', bonus:1.50, hpPercent:0.05, chance:0.13},
+  24: {name:'백야의 폭설', desc:'12% 확률로 공격력의 200% 추가 냉기 피해 + 다음 스킬 적중률 40%', bonus:2.00, chance:0.12, accuracy:0.4},
+  25: {name:'빙하의 종언', desc:'10% 확률로 공격력의 300% 추가 냉기 피해 + 1턴 빙결', bonus:3.00, chance:0.10, freeze:true}
+};
+function getIceSwordSpecial(level){
+  let active=null;
+  Object.keys(ICE_SWORD_SPECIALS).map(Number).sort((a,b)=>a-b).forEach(n=>{
+    if(level>=n) active={threshold:n,...ICE_SWORD_SPECIALS[n]};
+  });
+  return active;
+}
+function triggerIceSwordSpecial(attacker, defender){
+  if(!attacker || attacker.job?.id!=='ice_sword') return {extra:0,name:null,probabilistic:false};
+  const e=getIceSwordSpecial(attacker.level);
+  if(!e || Math.random() > (e.chance ?? 1)) return {extra:0,name:e?.name||null,probabilistic:false};
+  let extra=Math.floor(attacker.atk*(e.bonus||0));
+  if(e.hpPercent) extra += Math.floor((defender.maxHp || defender.hp || 0) * e.hpPercent);
+  if(e.accuracy) defender.debuffHitRate=e.accuracy;
+  if(e.freeze) defender.skipTurnCount=1;
+  return {extra,name:e.name,chance:e.chance ?? 1,probabilistic:(e.chance ?? 1)<1,freeze:!!e.freeze,accuracy:e.accuracy||null};
+}
+
+function triggerFireSwordSpecial(attacker, defender){
+  if(!attacker || attacker.job?.id!=='fire_sword') return {extra:0, dot:false, name:null};
+  const e=getFireSwordSpecial(attacker.level);
+  if(!e || Math.random() > (e.chance ?? 1)) return {extra:0, dot:false, name:e?.name||null};
+  let extra=Math.floor(attacker.atk*(e.bonus||0));
+  if(e.repeatChance && Math.random()<e.repeatChance) extra += Math.floor(attacker.atk*(e.bonus||0));
+  if(e.dot || e.dotPercent){
+    defender.fireBurn = e.dot || Math.max(1, Math.floor((defender.maxHp || defender.hp || 0) * (e.dotPercent || 0)));
+    defender.fireBurnTicks = e.dotTicks || 6;
+    defender.fireBurnTickMs = e.tickMs || 500;
+  }
+  return {extra, dot:!!(e.dot || e.dotPercent), name:e.name, chance:e.chance ?? 1, probabilistic:(e.chance ?? 1) < 1};
+}
+function runFireBurn(defender, onTick, onDone){
+  if(!defender || !defender.fireBurnTicks || defender.fireBurn<=0){ if(onDone) onDone(); return; }
+  const burnBar = defender === bEnemy ? enemyHpBar : (defender === bPlayer ? playerHpBar : null);
+  if(burnBar) burnBar.style.backgroundColor = '#e74c3c';
+  const tick=()=>{
+    if(defender.hp<=0 || defender.fireBurnTicks<=0){
+      defender.fireBurn=0; defender.fireBurnTicks=0;
+      if(burnBar) burnBar.style.backgroundColor = '';
+      if(onDone) onDone();
+      return;
+    }
+    const dmg=applyDamageToUnit(defender, defender.fireBurn);
+    defender.fireBurnTicks--;
+    if(onTick) onTick(dmg, defender.fireBurnTicks);
+    if(defender.fireBurnTicks>0) setTimeout(tick, defender.fireBurnTickMs || 500);
+    else {
+      defender.fireBurn=0;
+      if(burnBar) burnBar.style.backgroundColor = '';
+      if(onDone) onDone();
+    }
+  };
+  tick();
+}
+
+
+// ===== 화염의 검 전용 무기 특수효과 =====
+// 직업 스킬과 겹치지 않는 별도 무기 효과 이름을 사용합니다.
+const FIRE_SWORD_EFFECTS = {
+  2:  { name: '불씨의 흔적', desc: '일반 공격에 공격력의 5%만큼 추가 화염 피해', bonus: 0.05 },
+  5:  { name: '홍염의 각인', desc: '추가 화염 피해가 공격력의 10%로 증가', bonus: 0.10 },
+  8:  { name: '작열의 파편', desc: '20% 확률로 작은 화염 폭발, 공격력의 20% 추가 피해', bonus: 0.20, chance: 0.15 },
+  10: { name: '타오르는 낙인', desc: '20% 확률로 3초 동안 0.5초마다 50 화염 피해 (총 300)', burn: 50, burnSeconds: 3 },
+  12: { name: '홍련의 잔광', desc: '추가 화염 피해가 공격력의 20%로 증가', bonus: 0.20 },
+  15: { name: '화신의 권능', desc: '화염 폭발 피해가 공격력의 40%로 증가하고 범위 강화', bonus: 0.40, chance: 0.15 },
+  18: { name: '멸화의 인장', desc: '화염 효과 발동 시 30% 확률로 한 번 더 발동', repeatChance: 0.30 },
+  20: { name: '태초의 불꽃', desc: '15% 확률로 공격력의 100% 추가 화염 피해', bonus: 1.00, chance: 0.10 },
+  22: { name: '지옥불의 심장', desc: '13% 확률로 공격력의 150% 추가 화염 피해 + 5초 화상 (0.5초마다 최대 HP의 3%)', bonus: 1.50, chance: 0.08, burn: 50, burnSeconds: 5 },
+  24: { name: '홍련 폭주', desc: '12% 확률로 공격력의 200% 추가 화염 피해', bonus: 2.00, chance: 0.07 },
+  25: { name: '종언의 태양', desc: '10% 확률로 4초 화상 (0.5초마다 최대 HP의 3%)', bonus: 0, chance: 0.10, burn: 0, burnSeconds: 4 }
+};
+
+function getFireSwordEffect(level) {
+  let active = null;
+  for (const threshold of Object.keys(FIRE_SWORD_EFFECTS).map(Number).sort((a,b)=>a-b)) {
+    if (level >= threshold) active = { threshold, ...FIRE_SWORD_EFFECTS[threshold] };
+  }
+  return active;
+}
+
+function getFireSwordEffectList(level) {
+  return Object.keys(FIRE_SWORD_EFFECTS).map(Number).sort((a,b)=>a-b)
+    .filter(n => level >= n)
+    .map(n => ({ threshold: n, ...FIRE_SWORD_EFFECTS[n] }));
+}
+
+
+function calculateFireSwordBonusDamage(level, baseDamage, rng = Math.random()) {
+  const effects = getFireSwordEffectList(level);
+  if (!effects.length) return { extraDamage: 0, triggered: false, effect: null };
+
+  const highest = effects[effects.length - 1];
+  const chance = highest.chance ?? 1;
+  const triggered = chance >= 1 ? true : rng < chance;
+  const extraDamage = triggered ? Math.floor(baseDamage * (highest.bonus ?? 0)) : 0;
+
+  return {
+    extraDamage,
+    triggered,
+    effect: highest.name,
+    description: highest.desc
+  };
+}
+
+    function getUpgradeCost(level) {
+      return UPGRADE_COSTS[Math.max(0, Math.min(24, level))];
+    }
+
+    const drawSection = document.getElementById('draw-section');
+    const mainGame = document.getElementById('main-game');
+    const coinsEl = document.getElementById('user-coins');
+    const jobTitleEl = document.getElementById('job-title');
+    const iconEl = document.getElementById('weapon-icon');
+    const nameEl = document.getElementById('weapon-name');
+    const levelEl = document.getElementById('weapon-level');
+    const hpEl = document.getElementById('stat-hp');
+    const atkEl = document.getElementById('stat-atk');
+    const skillListEl = document.getElementById('skill-list');
+    const btnOpenSkillHelp = document.getElementById('btn-open-skill-help');
+    const skillHelpModal = document.getElementById('skill-help-modal');
+    const skillHelpTitle = document.getElementById('skill-help-title');
+    const skillHelpList = document.getElementById('skill-help-list');
+    const btnSkillHelpClose = document.getElementById('btn-skill-help-close');
+
+    const btnDraw = document.getElementById('btn-draw');
+    const btnEnhance = document.getElementById('btn-enhance');
+    const btnBattle = document.getElementById('btn-battle');
+    const logEl = document.getElementById('log');
+
+
+    const btnOpenAchievement = document.getElementById('btn-open-achievement');
+    const achievementModal = document.getElementById('achievement-modal');
+    const achievementList = document.getElementById('achievement-list');
+    const btnAchClose = document.getElementById('btn-ach-close');
+
+    const adminCodeInput = document.getElementById('admin-code-input');
+    const btnAdminSubmit = document.getElementById('btn-admin-submit');
+    const btnChangeJob = document.getElementById('btn-change-job');
+    const btnAddCoins = document.getElementById('btn-add-coins');
+    const jobSelectModal = document.getElementById('job-select-modal');
+    const jobOptionList = document.getElementById('job-option-list');
+
+    const loginOverlay = document.getElementById('login-overlay');
+    const loginUsername = document.getElementById('login-username');
+    const loginPassword = document.getElementById('login-password');
+    const btnLogin = document.getElementById('btn-login');
+    const btnLogout = document.getElementById('btn-logout');
+    const btnSignup = document.getElementById('btn-signup');
+    const loginStatus = document.getElementById('login-status');
+    const onlineUserEl = document.getElementById('online-user');
+    const btnOpenRanking = document.getElementById('btn-open-ranking');
+    const rankingModal = document.getElementById('ranking-modal');
+    const rankingList = document.getElementById('ranking-list');
+    const btnRankingClose = document.getElementById('btn-ranking-close');
+    const btnOpenFriendly = document.getElementById('btn-open-friendly');
+    const friendlyModal = document.getElementById('friendly-modal');
+    const btnFriendlyCreate = document.getElementById('btn-friendly-create');
+    const btnFriendlyJoin = document.getElementById('btn-friendly-join');
+    const btnFriendlyClose = document.getElementById('btn-friendly-close');
+    const friendlyCodeInput = document.getElementById('friendly-code-input');
+    const friendlyStatus = document.getElementById('friendly-status');
+
+    const battleScreen = document.getElementById('battle-screen');
+    const battleModeTitle = document.getElementById('battle-mode-title');
+    const enemyNameEl = document.getElementById('enemy-name');
+    const enemyHpText = document.getElementById('enemy-hp-text');
+    const enemyHpBar = document.getElementById('enemy-hp-bar');
+    const enemyShieldBar = document.getElementById('enemy-shield-bar');
+    const enemyExtraStack = document.getElementById('enemy-extra-stack');
+
+    const playerBattleName = document.getElementById('player-battle-name');
+    const playerHpText = document.getElementById('player-hp-text');
+    const playerHpBar = document.getElementById('player-hp-bar');
+    const playerShieldBar = document.getElementById('player-shield-bar');
+    const playerExtraStack = document.getElementById('player-extra-stack');
+
+    const battleHistoryLog = document.getElementById('battle-history-log');
+
+    const btnActBasic = document.getElementById('btn-act-basic');
+    const btnActSk1 = document.getElementById('btn-act-sk1');
+    const btnActSk2 = document.getElementById('btn-act-sk2');
+    const btnActSk3 = document.getElementById('btn-act-sk3');
+
+    const dmgToast = document.getElementById('dmg-toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastBody = document.getElementById('toast-body');
+    const toastDesc = document.getElementById('toast-desc');
+
+    let playerJob = null;
+    let currentLevel = 1;
+    let coins = 1000;
+    let isAdminUnlocked = false;
+    let winCount = 0;
+    let currentUser = null;
+    let currentUsername = '';
+    let firebaseReady = false;
+    let authInitialized = false;
+    let friendlyMode = false;
+    let friendlyRoomId = '';
+    let friendlyRole = '';
+    let friendlyTurnUid = '';
+    let friendlySeq = 0;
+    let friendlyPollTimer = null;
+    let friendlyLastLog = '';
+
+    let bPlayer = {};
+    let bEnemy = {};
+    let isProcessingTurn = false;
+
+    function loadData() {
+      const savedCoins = localStorage.getItem('game_coins_v8');
+      if (savedCoins !== null) coins = parseInt(savedCoins, 10);
+      else coins = STARTING_GOLD;
+
+      const savedJobId = localStorage.getItem('assigned_job_id_v8');
+      const savedLevel = localStorage.getItem('assigned_job_level_v8');
+      const savedRank = localStorage.getItem('assigned_job_rank_v8');
+      // 관리자 권한은 새로고침/재접속 때 절대 유지하지 않습니다.
+      // 반드시 현재 화면에서 관리자 코드를 다시 입력해야 합니다.
+      localStorage.removeItem('admin_mode_unlocked_v8');
+      localStorage.removeItem('assigned_job_rank_v8');
+      isAdminUnlocked = false;
+      const savedWins = localStorage.getItem('game_win_count_v8');
+
+      if (savedWins) winCount = parseInt(savedWins, 10);
+
+      // 관리자 버튼은 관리자 코드 인증 전에는 항상 숨깁니다.
+      btnChangeJob.style.display = 'none';
+      btnAddCoins.style.display = 'none';
+      if (currentUsername) onlineUserEl.textContent = `로그인: ${currentUsername}`;
+
+      if (savedJobId) {
+        playerJob = JOBS.find(j => j.id === savedJobId);
+        currentLevel = savedLevel ? parseInt(savedLevel, 10) : 1;
+        drawSection.style.display = 'none';
+        mainGame.style.display = 'block';
+      } else {
+        drawSection.style.display = 'block';
+        mainGame.style.display = 'none';
+      }
+      renderUI();
+    }
+
+    async function loadOnlineData() {
+      if (!currentUser || !window.firebaseGame) return false;
+      try {
+        const snap = await window.firebaseGame.getDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', currentUser.uid));
+        if (!snap.exists()) return false;
+        const d = snap.data();
+        if (Number.isFinite(Number(d.coins))) coins = Number(d.coins);
+        if (d.jobId) playerJob = JOBS.find(j => j.id === d.jobId) || playerJob;
+        if (Number.isFinite(Number(d.level))) currentLevel = Math.max(1, Math.min(25, Number(d.level)));
+        if (Number.isFinite(Number(d.wins))) winCount = Math.max(0, Number(d.wins));
+        localStorage.setItem('game_coins_v8', coins);
+        if (playerJob) {
+          localStorage.setItem('assigned_job_id_v8', playerJob.id);
+          localStorage.setItem('assigned_job_level_v8', currentLevel);
+         }
+        localStorage.setItem('game_win_count_v8', winCount);
+        return true;
+      } catch (e) {
+        console.warn('온라인 불러오기 실패:', e);
+        return null;
+      }
+    }
+
+    async function saveOnlineData() {
+      if (!currentUser || !window.firebaseGame) return;
+      try {
+        await window.firebaseGame.setDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', currentUser.uid), {
+          username: currentUsername, coins, jobId: playerJob ? playerJob.id : null, level: currentLevel, wins: winCount, updatedAt: Date.now()
+        }, { merge: true });
+      } catch (e) {
+        console.warn('온라인 저장 실패:', e);
+      }
+    }
+
+    function saveData() {
+      localStorage.setItem('game_coins_v8', coins);
+      localStorage.setItem('game_username_v8', currentUsername || '');
+      // 관리자 권한은 저장하지 않습니다.
+      localStorage.removeItem('admin_mode_unlocked_v8');
+      localStorage.removeItem('assigned_job_rank_v8');
+      localStorage.setItem('game_win_count_v8', winCount);
+      if (playerJob) {
+        localStorage.setItem('assigned_job_id_v8', playerJob.id);
+        localStorage.setItem('assigned_job_level_v8', currentLevel);
+      }
+      // 호출한 쪽에서 로그아웃 전에 저장 완료를 기다릴 수 있도록 Promise를 반환합니다.
+      return saveOnlineData();
+    }
+
+    btnAdminSubmit.addEventListener('click', () => {
+      const inputCode = adminCodeInput.value.trim();
+      if (inputCode === 'wejhrweiroiweuori123') {
+        adminCodeInput.value = '';
+        showToast('🔑 관리자 권한 승인', '<b>관리자 기능이 모두 활성화되었습니다!</b>', '직업 변경 및 만코인 지급 버튼이 추가됩니다.', () => {
+          isAdminUnlocked = true;
+          btnChangeJob.style.display = 'inline-block';
+          btnAddCoins.style.display = 'inline-block';
+          saveData();
+        });
+      } else {
+        logEl.className = 'log fail';
+        logEl.textContent = '❌ 유효하지 않은 관리자 코드입니다.';
+      }
+    });
+
+    btnAddCoins.addEventListener('click', () => {
+      if (!isAdminUnlocked) return;
+      coins += 10000;
+      saveData();
+      renderUI();
+      logEl.className = 'log success';
+      logEl.textContent = '💰 관리자 기능: 10,000 G가 지급되었습니다!';
+    });
+
+    function openJobSelectModal() {
+      jobOptionList.innerHTML = '';
+      JOBS.forEach(j => {
+        const b = document.createElement('button');
+        b.className = 'job-select-btn';
+        b.innerHTML = `<span>${j.icon} <b>${j.jobBaseName}</b></span><span style="font-size:0.8rem; color:#f1c40f;">선택하기 ➔</span>`;
+        b.onclick = () => {
+          playerJob = j;
+          currentLevel = 1;
+            jobSelectModal.style.display = 'none';
+          drawSection.style.display = 'none';
+          mainGame.style.display = 'block';
+          logEl.className = 'log success';
+          logEl.textContent = `🎉 [${getJobTitle(playerJob)}] 직업을 직접 선택하셨습니다!`;
+          saveData();
+          renderUI();
+        };
+        jobOptionList.appendChild(b);
+      });
+      jobSelectModal.style.display = 'flex';
+    }
+
+    btnChangeJob.addEventListener('click', () => {
+      if (!isAdminUnlocked) return;
+      openJobSelectModal();
+    });
+
+    btnOpenAchievement.addEventListener('click', () => {
+      achievementList.innerHTML = `
+        <div style="margin-bottom:8px;">⚔️ <b>전투 승리 횟수:</b> ${winCount}회 승리</div>
+        <div style="margin-bottom:8px;">💰 <b>현재 보유 코인:</b> ${coins.toLocaleString()} G</div>
+        
+      `;
+      achievementModal.style.display = 'flex';
+    });
+    btnAchClose.addEventListener('click', () => { achievementModal.style.display = 'none'; });
+
+    function getMaxHp(job, level = 1) { return Math.round(job.baseHp * (1 + Math.max(0, level - 1) * 0.70)); }
+
+    function getAtk(job, level) {
+      const basePlusLevel = job.baseAtk + (level - 1) * job.atkPerLevel;
+      const highDmgBonus = job.isHighDmg ? 0.15 : 0;
+      return Math.round(basePlusLevel * (1 + highDmgBonus) * (1 + Math.max(0, level - 1) * 0.15));
+    }
+
+    function getJobTitle(job) {
+      return job.jobBaseName;
+    }
+
+    function renderUI() {
+      coinsEl.textContent = coins.toLocaleString();
+      if (!playerJob) return;
+
+      jobTitleEl.textContent = getJobTitle(playerJob);
+      iconEl.textContent = playerJob.icon;
+      nameEl.textContent = playerJob.weaponName;
+      levelEl.textContent = `+${currentLevel}`;
+
+      hpEl.textContent = getMaxHp(playerJob, currentLevel);
+      atkEl.textContent = getAtk(playerJob, currentLevel);
+
+      skillListEl.innerHTML = '';
+      playerJob.skills.forEach((s, idx) => {
+        const item = document.createElement('div');
+        item.style.marginBottom = '3px';
+        item.innerHTML = `✨ <b>[스킬${idx+1}] ${s.name}</b>: ${s.desc}`;
+        skillListEl.appendChild(item);
+      });
+
+      // 기존 스킬 설명 영역에 "현재 적용되는 무기 특수효과"를 함께 표시합니다.
+      if (playerJob.id === 'bow') {
+        const active = getArcherSpecial(currentLevel);
+        const effectBox = document.createElement('div');
+        effectBox.className = 'weapon-effect-note';
+        effectBox.style.fontSize = '1.12rem';
+        effectBox.innerHTML = active ? `<b style="font-size:1.25rem;">🏹 현재 특수효과</b><div style="margin-top:8px; font-size:1.08rem;"><b>+${active.threshold} ${active.name}</b><br>${active.desc}</div>` : `<b style="font-size:1.25rem;">🏹 현재 특수효과</b><br><span style="opacity:.85;">+2 강화부터 특수효과가 적용됩니다.</span>`;
+        skillListEl.appendChild(effectBox);
+      }
+      if (playerJob.id === 'lightning_spear') {
+        const active = getLightningSpearSpecial(currentLevel);
+        const effectBox = document.createElement('div');
+        effectBox.className = 'weapon-effect-note';
+        effectBox.style.fontSize = '1.12rem';
+        effectBox.style.background = 'rgba(255,215,0,.08)';
+        effectBox.style.borderColor = 'rgba(255,215,0,.22)';
+        effectBox.innerHTML = active ? `<b style="font-size:1.25rem;">⚡ 현재 특수효과</b><div style="margin-top:8px; font-size:1.08rem;"><b>+${active.threshold} ${active.name}</b><br>${active.desc}</div>` : `<b style="font-size:1.25rem;">⚡ 현재 특수효과</b><br><span style="opacity:.85;">+2 강화부터 특수효과가 적용됩니다.</span>`;
+        skillListEl.appendChild(effectBox);
+      }
+      if (playerJob.id === 'sword') {
+        const unlocked = Object.keys(SWORD_SPECIALS).map(Number).sort((a,b)=>a-b).filter(n=>currentLevel>=n).map(n=>({threshold:n,...SWORD_SPECIALS[n]}));
+        const active = unlocked.length ? unlocked[unlocked.length-1] : null;
+        const effectBox = document.createElement('div');
+        effectBox.className = 'weapon-effect-note';
+        effectBox.style.fontSize = '1.12rem';
+        effectBox.innerHTML = active ? `<b style="font-size:1.25rem;">⚔️ 현재 특수효과</b><div style="margin-top:8px; font-size:1.08rem;"><b>+${active.threshold} ${active.name}</b><br>${active.desc}</div>` : `<b style="font-size:1.25rem;">⚔️ 현재 특수효과</b><br><span style="opacity:.85;">+2 강화부터 특수효과가 적용됩니다.</span>`;
+        skillListEl.appendChild(effectBox);
+      }
+      if (playerJob.id === 'ice_sword') {
+        const unlocked = Object.keys(ICE_SWORD_SPECIALS).map(Number).sort((a,b)=>a-b).filter(n=>currentLevel>=n).map(n=>({threshold:n,...ICE_SWORD_SPECIALS[n]}));
+        const active = unlocked.length ? unlocked[unlocked.length-1] : null;
+        const effectBox = document.createElement('div');
+        effectBox.className = 'weapon-effect-note';
+        effectBox.style.background = 'rgba(80,180,255,.08)';
+        effectBox.style.borderColor = 'rgba(80,180,255,.22)';
+        effectBox.style.fontSize = '1.12rem';
+        effectBox.innerHTML = active ? `<b style="font-size:1.25rem;">❄️ 현재 특수효과</b><div style="margin-top:8px; font-size:1.08rem;"><b>+${active.threshold} ${active.name}</b><br>${active.desc}</div>` : `<b style="font-size:1.25rem;">❄️ 현재 특수효과</b><br><span style="opacity:.85;">+2 강화부터 특수효과가 적용됩니다.</span>`;
+        skillListEl.appendChild(effectBox);
+      }
+      if (playerJob.id === 'fire_sword') {
+        const unlocked = getFireSwordEffectList(currentLevel);
+        const active = unlocked.length ? unlocked[unlocked.length-1] : null;
+        const effectBox = document.createElement('div');
+        effectBox.className = 'weapon-effect-note';
+        effectBox.style.fontSize = '1.12rem';
+        if (active) {
+          effectBox.innerHTML = `<b style="font-size:1.25rem;">🔥 현재 특수효과</b><div style="margin-top:8px; font-size:1.08rem;"><b>+${active.threshold} ${active.name}</b><br>${active.desc}</div>`;
+        } else {
+          effectBox.innerHTML = `<b style="font-size:1.25rem;">🔥 현재 특수효과</b><br><span style="opacity:.85;">+2 강화부터 특수효과가 적용됩니다.</span>`;
+        }
+        skillListEl.appendChild(effectBox);
+      }
+      if (currentLevel >= 25) {
+        btnEnhance.style.display = 'block';
+        btnEnhance.disabled = true;
+        btnEnhance.textContent = '🔨 최대 강화 (+25)';
+      } else {
+        btnEnhance.style.display = 'block';
+        btnEnhance.disabled = false;
+        const cost = getUpgradeCost(currentLevel - 1);
+        btnEnhance.textContent = `🔨 강화 시도 (${cost.toLocaleString()} G / 확률: ${SUCCESS_RATES[currentLevel - 1]}%)`;
+      }
+    }
+
+
+    function openSkillHelp() {
+      if (!playerJob) {
+        skillHelpTitle.textContent = '📖 스킬 설명';
+        skillHelpList.innerHTML = '<div class="skill-help-row">먼저 직업을 배정받아 주세요.</div>';
+      } else {
+        skillHelpTitle.textContent = `📖 ${playerJob.jobBaseName} 스킬 설명`;
+        skillHelpList.innerHTML = playerJob.skills.map((s, idx) =>
+          `<div class="skill-help-row">
+             <div class="skill-help-name">✨ 스킬 ${idx + 1} · ${s.name}</div>
+             <div class="skill-help-desc">${s.desc}</div>
+           </div>`
+        ).join('');
+
+        if (playerJob.id === 'fire_sword') {
+          const unlocked = getFireSwordEffectList(currentLevel);
+          skillHelpList.innerHTML += `
+            <div class="skill-help-row">
+              <div class="skill-help-name">🔥 현재 강화로 추가된 무기 효과</div>
+              <div class="skill-help-desc">
+                ${unlocked.length
+                  ? unlocked.map(e => `+${e.threshold} <b>${e.name}</b> — ${e.desc}`).join('<br><br>')
+                  : '+2부터 화염의 검 무기 특수효과가 해금됩니다.'}
+              </div>
+            </div>`;
+        }
+      }
+      skillHelpModal.style.display = 'flex';
+    }
+
+    btnSkillHelpClose.addEventListener('click', () => {
+      skillHelpModal.style.display = 'none';
+    });
+    skillHelpModal.addEventListener('click', (e) => {
+      if (e.target === skillHelpModal) skillHelpModal.style.display = 'none';
+    });
+
+    btnDraw.addEventListener('click', () => {
+      playerJob = JOBS[Math.floor(Math.random() * JOBS.length)];
+      currentLevel = 1;
+      saveData();
+      drawSection.style.display = 'none';
+      mainGame.style.display = 'block';
+      logEl.className = 'log success';
+      logEl.textContent = `🎉 [${getJobTitle(playerJob)}] 직업이 배정되었습니다!`;
+      renderUI();
+    });
+
+    const btnRerollJob=document.createElement('button');
+    btnRerollJob.className='btn-extra-feature';
+    btnRerollJob.textContent='🎲 100,000G 직업 랜덤 재추첨';
+    btnRerollJob.addEventListener('click',()=>{if(coins<100000||!playerJob){logEl.className='log fail';logEl.textContent='❌ 100,000G가 필요합니다!';return;}const choices=JOBS.filter(j=>j.id!==playerJob.id);playerJob=choices[Math.floor(Math.random()*choices.length)];coins-=100000;currentLevel=1;saveData();renderUI();logEl.className='log success';logEl.textContent=`🎲 직업 재추첨! [${getJobTitle(playerJob)}]`;});
+    btnEnhance.parentElement.appendChild(btnRerollJob);
+
+    let isEnhancing = false;
+
+    function playUpgradeMotion(level, success, onDone) {
+      const existing = document.getElementById('upgrade-motion-overlay');
+      if (existing) existing.remove();
+
+      const overlay = document.createElement('div');
+      overlay.id = 'upgrade-motion-overlay';
+      overlay.style.cssText = `
+        position:fixed; inset:0; z-index:99999;
+        display:flex; align-items:center; justify-content:center;
+        background:rgba(5,7,18,.72); backdrop-filter:blur(4px);
+      `;
+
+      const box = document.createElement('div');
+      box.style.cssText = `
+        width:min(420px,88vw); padding:28px 20px; text-align:center;
+        border-radius:22px; background:linear-gradient(180deg,#171b2b,#0c1020);
+        border:1px solid rgba(255,255,255,.16);
+        box-shadow:0 24px 80px rgba(0,0,0,.55);
+        color:#fff;
+      `;
+
+      const title = document.createElement('div');
+      title.textContent = `⚒️ +${level} 강화`;
+      title.style.cssText = 'font-size:27px;font-weight:800;margin-bottom:14px;';
+
+      const icon = document.createElement('div');
+      icon.textContent = '⚔️';
+      icon.style.cssText = `
+        font-size:78px; line-height:1; margin:12px 0 18px;
+        animation:upgradeSwordPulse .65s ease-in-out infinite;
+      `;
+
+      const status = document.createElement('div');
+      status.textContent = '강화 중...';
+      status.style.cssText = 'font-size:19px;font-weight:800;min-height:28px;';
+
+      const style = document.createElement('style');
+      style.id = 'upgrade-motion-style';
+      style.textContent = `
+        @keyframes upgradeSwordPulse {
+          0%,100% { transform:scale(1) rotate(-4deg); }
+          50% { transform:scale(1.14) rotate(4deg); }
+        }
+        @keyframes upgradeSuccessPop {
+          0% { transform:scale(.75); opacity:.2; }
+          65% { transform:scale(1.22); opacity:1; }
+          100% { transform:scale(1); opacity:1; }
+        }
+        @keyframes upgradeFailShake {
+          0%,100% { transform:translateX(0); }
+          25% { transform:translateX(-10px); }
+          75% { transform:translateX(10px); }
+        }
+      `;
+      document.head.appendChild(style);
+
+      box.append(title, icon, status);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        if (success) {
+          icon.textContent = '✨⚔️✨';
+          icon.style.animation = 'upgradeSuccessPop .55s ease-out';
+          status.textContent = `🎉 강화 성공! +${level} → +${level + 1}`;
+          status.style.color = '#7dffad';
+        } else {
+          icon.textContent = '💥⚔️';
+          icon.style.animation = 'upgradeFailShake .45s ease-in-out';
+          status.textContent = `💥 강화 실패! +${level} 유지`;
+          status.style.color = '#ff8f8f';
+        }
+      }, 700);
+
+      setTimeout(() => {
+        overlay.remove();
+        style.remove();
+        if (onDone) onDone();
+      }, 1450);
+    }
+
+    btnEnhance.addEventListener('click', () => {
+      if (isEnhancing || currentLevel >= 25) return;
+
+      const fromLevel = currentLevel;
+      const cost = getUpgradeCost(fromLevel - 1);
+
+      if (coins < cost) {
+        logEl.className = 'log fail';
+        logEl.textContent = `❌ 강화 비용 ${cost.toLocaleString()} G가 필요합니다!`;
+        return;
+      }
+
+      isEnhancing = true;
+      btnEnhance.disabled = true;
+      coins -= cost;
+
+      const success = Math.random() * 100 < SUCCESS_RATES[fromLevel - 1];
+
+      // 기존의 7강 이후 5% 하락 규칙은 유지하되,
+      // 실패 시 기본적으로는 현재 강화 수치를 유지합니다.
+      let finalLevel = fromLevel;
+      let penalty = '유지됨';
+
+      if (success) {
+        finalLevel = fromLevel + 1;
+      } else if (fromLevel >= 7 && Math.random() * 100 < 5) {
+        finalLevel = Math.max(1, fromLevel - 1);
+        penalty = '⚠️ 1강 하락!';
+      }
+
+      playUpgradeMotion(fromLevel, success, () => {
+        currentLevel = finalLevel;
+        logEl.className = success ? 'log success' : (penalty.includes('하락') ? 'log fail' : 'log warning');
+        logEl.textContent = success
+          ? `🎉 강화 성공! (+${fromLevel} ➔ +${currentLevel})`
+          : `💥 강화 실패! (+${fromLevel} ${penalty})`;
+
+        isEnhancing = false;
+        btnEnhance.disabled = false;
+        saveData();
+        renderUI();
+      });
+    });
+
+    function applyDamageToUnit(unit, rawDmg) {
+      let dmg = Math.round(rawDmg);
+      if (unit.shield > 0) {
+        if (unit.shield >= dmg) {
+          unit.shield -= dmg;
+          return 0;
+        } else {
+          dmg -= unit.shield;
+          unit.shield = 0;
+        }
+      }
+      unit.hp -= dmg;
+      return dmg;
+    }
+
+    function makeBattleUnit(job, level, title) {
+      const maxHp = getMaxHp(job, level);
+      return { hp:maxHp, maxHp, atk:getAtk(job, level), job, level, title,
+        basicCount:0, sk1Cd:0, sk2Cd:0, sk3Cd:0, sk1Next:1, sk2Next:3, sk3Next:5, shield:0,
+        nextDmgMult:1.0, debuffHitRate:1.0, reviveStack:0, deathMarkStack:0, poisonDmg:0, poisonTurns:0,
+        skipTurnCount:0, selfAttacking:false, delayedDmg:0, swordGimmickHp:null, electricStacks:0, fireBurn:0, fireBurnTicks:0, fireBurnTickMs:500 };
+    }
+    function serializeBattleUnit(u) {
+      const out = {...u}; delete out.job; out.jobId = u.job.id; return out;
+    }
+    function deserializeBattleUnit(x) {
+      const job = JOBS.find(j=>j.id===x.jobId); return {...x, job};
+    }
+    function newFriendlyCode(){ return String(Math.floor(100000 + Math.random()*900000)); }
+    function friendlyStateFromCurrent(){ return serializeBattleUnit(bPlayer); }
+    function friendlyOpponentState(){ return serializeBattleUnit(bEnemy); }
+    function setFriendlyStatus(text,type=''){ friendlyStatus.textContent=text; friendlyStatus.className=`login-status ${type}`; }
+    async function createFriendlyRoom(){
+      if(!currentUser || !playerJob || !window.firebaseGame) return setFriendlyStatus('로그인과 직업 배정이 필요합니다.','fail');
+      let code = newFriendlyCode();
+      for(let i=0;i<5;i++){ const exists=await window.firebaseGame.getDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',code)); if(!exists.exists()) break; code=newFriendlyCode(); }
+      const unit=makeBattleUnit(playerJob,currentLevel,currentUsername);
+      friendlyRoomId=code; friendlyRole='p1'; friendlyTurnUid=currentUser.uid; friendlySeq=0; friendlyMode=false; friendlyLastLog='';
+      await window.firebaseGame.setDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',code),{
+        status:'waiting', p1Uid:currentUser.uid, p1Name:currentUsername, p1State:serializeBattleUnit(unit), turnUid:currentUser.uid, seq:0, updatedAt:Date.now()
+      });
+      setFriendlyStatus(`✅ 방 생성 완료!\n방 코드: ${code}\n친구가 이 코드를 입력하면 전투가 시작됩니다.`,'success'); startFriendlyPolling();
+    }
+    async function joinFriendlyRoom(){
+      if(!currentUser || !playerJob || !window.firebaseGame) return setFriendlyStatus('로그인과 직업 배정이 필요합니다.','fail');
+      const code=friendlyCodeInput.value.trim(); if(!/^\d{6}$/.test(code)) return setFriendlyStatus('6자리 방 코드를 입력하세요.','fail');
+      const ref=window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',code); const snap=await window.firebaseGame.getDoc(ref);
+      if(!snap.exists()) return setFriendlyStatus('존재하지 않는 방입니다.','fail'); const r=snap.data();
+      if(r.status!=='waiting' || r.p1Uid===currentUser.uid) return setFriendlyStatus('참가할 수 없는 방입니다.','fail');
+      const unit=makeBattleUnit(playerJob,currentLevel,currentUsername);
+      friendlyRoomId=code; friendlyRole='p2'; friendlyTurnUid=r.p1Uid; friendlySeq=0; friendlyMode=true; friendlyLastLog='';
+      await window.firebaseGame.setDoc(ref,{status:'active',p2Uid:currentUser.uid,p2Name:currentUsername,p2State:serializeBattleUnit(unit),turnUid:r.p1Uid,seq:1,updatedAt:Date.now()},{merge:true});
+      friendlyModal.style.display='none';
+      setFriendlyStatus('⚔️ 방 참가 완료! 상대방과 전투를 시작합니다.','success');
+      const joinedRoom={...r,p2Uid:currentUser.uid,p2Name:currentUsername,p2State:serializeBattleUnit(unit),status:'active',seq:1};
+      startFriendlyFromRoom(joinedRoom);
+      startFriendlyPolling();
+    }
+    function startFriendlyFromRoom(r){
+      if (!r || r.status !== 'active' || !r.p1State || !r.p2State) return;
+      friendlyModal.style.display='none';
+      setFriendlyStatus('⚔️ 상대방과 연결되었습니다. 전투 시작!', 'success');
+      friendlyMode=true; friendlyTurnUid=r.turnUid; friendlySeq=Number(r.seq)||0;
+      const mine=friendlyRole==='p1'?r.p1State:r.p2State, other=friendlyRole==='p1'?r.p2State:r.p1State;
+      bPlayer=deserializeBattleUnit(mine); bEnemy=deserializeBattleUnit(other); bEnemy.title=friendlyRole==='p1'?r.p2Name:r.p1Name;
+      playerBattleName.textContent=currentUsername; enemyNameEl.textContent=`${bEnemy.title} (친선전)`;
+      battleModeTitle.textContent='⚔️ 친선전'; battleHistoryLog.innerHTML='<div>친선전이 시작되었습니다! 상대의 턴을 기다려주세요.</div>'; updateBattleUI(); battleScreen.style.display='flex';
+    }
+    function startFriendlyPolling(){ if(friendlyPollTimer) clearInterval(friendlyPollTimer); friendlyPollTimer=setInterval(pollFriendlyRoom,700); pollFriendlyRoom(); }
+    async function pollFriendlyRoom(){
+      if(!friendlyRoomId || !window.firebaseGame || !currentUser) return; try{
+        const snap=await window.firebaseGame.getDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',friendlyRoomId)); if(!snap.exists()) return; const r=snap.data();
+        if(r.status==='waiting'){ setFriendlyStatus(`방 코드: ${friendlyRoomId}\n상대방을 기다리는 중...`,'success'); return; }
+        if(r.status==='finished'){
+          clearInterval(friendlyPollTimer); friendlyPollTimer=null;
+          const won = r.winnerUid && currentUser && r.winnerUid === currentUser.uid;
+          battleScreen.style.display='none';
+          isProcessingTurn=false; friendlyMode=false;
+          showToast(won ? '🏆 친선전 승리!' : '💀 친선전 패배!', won ? '상대를 쓰러뜨렸습니다!' : '상대에게 패배했습니다.', '친선전이 종료되었습니다.', () => {});
+          return;
+        }
+        if(r.status!=='active' || !r.p1State || !r.p2State) return;
+        friendlyModal.style.display='none';
+        const seq=Number(r.seq)||0; if(seq===friendlySeq && friendlyMode) return;
+        friendlySeq=seq; friendlyTurnUid=r.turnUid; friendlyMode=true; startFriendlyFromRoom(r);
+        if(r.lastLog && r.lastLog!==friendlyLastLog){ friendlyLastLog=r.lastLog; addLog(r.lastLog); }
+        if(r.status==='finished'){ clearInterval(friendlyPollTimer); friendlyPollTimer=null; }
+      }catch(e){ console.warn('친선전 동기화 실패',e); }
+    }
+    async function friendlyCommitState(){
+      if(!friendlyRoomId || !window.firebaseGame || !currentUser) return;
+      const ref=window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',friendlyRoomId);
+      const snap=await window.firebaseGame.getDoc(ref);
+      if(!snap.exists()) { setFriendlyStatus('친선전 방이 사라졌습니다.','fail'); return; }
+      const r=snap.data();
+      if(r.turnUid !== currentUser.uid) return;
+      const newSeq=(Number(r.seq)||0)+1;
+      const payload={seq:newSeq,turnUid:friendlyRole==='p1'?r.p2Uid:r.p1Uid,updatedAt:Date.now(),lastLog:`${currentUsername}의 행동이 적용되었습니다.`};
+      if(friendlyRole==='p1') { payload.p1State=serializeBattleUnit(bPlayer); payload.p2State=serializeBattleUnit(bEnemy); }
+      else { payload.p2State=serializeBattleUnit(bPlayer); payload.p1State=serializeBattleUnit(bEnemy); }
+      await window.firebaseGame.setDoc(ref,payload,{merge:true});
+      friendlySeq=newSeq; friendlyTurnUid=payload.turnUid;
+    }
+    async function submitFriendlyAction(actionType){
+      if(!friendlyMode || !friendlyRoomId || !currentUser) return false;
+      if(friendlyTurnUid!==currentUser.uid){ addLog('⏳ 상대의 턴입니다.'); return true; }
+      executeAction(actionType); return true;
+    }
+
+    function startBattle() {
+      isProcessingTurn = false;
+
+      const otherJobs = JOBS.filter(j => j.id !== playerJob.id);
+      const aiJob = otherJobs[Math.floor(Math.random() * otherJobs.length)];
+      let aiLevel = Math.max(1, Math.min(25, currentLevel + Math.floor(Math.random() * 5) - 2));
+
+      bPlayer = {
+        hp: getMaxHp(playerJob, currentLevel), maxHp: getMaxHp(playerJob, currentLevel),
+        atk: getAtk(playerJob, currentLevel), job: playerJob, level: currentLevel,
+        basicCount: 0, sk1Cd: 0, sk2Cd: 0, sk3Cd: 0, sk1Next: 1, sk2Next: 3, sk3Next: 5, shield: 0, fireBurn:0, fireBurnTicks:0, fireBurnTickMs:500,
+        nextDmgMult: 1.0, debuffHitRate: 1.0, reviveStack: 0, deathMarkStack: 0, poisonDmg: 0, poisonTurns: 0, skipTurnCount: 0, selfAttacking: false, delayedDmg: 0
+      };
+
+      bEnemy = {
+        hp: getMaxHp(aiJob, aiLevel), maxHp: getMaxHp(aiJob, aiLevel),
+        atk: getAtk(aiJob, aiLevel), job: aiJob, level: aiLevel,
+        title: `전투 봇 (${getJobTitle(aiJob)})`,
+        nextDmgMult: 1.0, debuffHitRate: 1.0, skipTurnCount: 0, selfAttacking: false,
+        delayedDmg: 0, deathMarkStack: 0, swordGimmickHp: null, reviveStack: 0,
+        basicCount: 0, sk1Cd: 0, sk2Cd: 0, sk3Cd: 0, sk1Next: 1, sk2Next: 3, sk3Next: 5, shield: 0, poisonDmg: 0, poisonTurns: 0
+      };
+
+      battleModeTitle.textContent = '⚔️ 일반 결투';
+      playerBattleName.textContent = getJobTitle(playerJob);
+      enemyNameEl.textContent = `${bEnemy.title} (+${aiLevel}강)`;
+
+      battleHistoryLog.innerHTML = '<div>전투가 시작되었습니다! 일반 공격을 시도해 스킬을 해금하세요.</div>';
+      
+      updateBattleUI();
+      battleScreen.style.display = 'flex';
+    }
+
+    function updateBattleUI() {
+      const pHpPct = Math.max(0, (bPlayer.hp / bPlayer.maxHp) * 100);
+      const pShieldPct = Math.max(0, (bPlayer.shield / bPlayer.maxHp) * 100);
+
+      playerHpBar.style.width = `${pHpPct}%`;
+      playerShieldBar.style.width = `${pShieldPct}%`;
+      playerHpText.textContent = `${Math.max(0, bPlayer.hp)} / ${bPlayer.maxHp}` + (bPlayer.shield > 0 ? ` (🛡️${bPlayer.shield})` : '');
+
+      let pStackTxt = `⚔️공격:${bPlayer.basicCount}스택`;
+      if (bPlayer.job.id === 'wand') pStackTxt += ` | ✨부활:${bPlayer.reviveStack}스택`;
+      if (bPlayer.job.id === 'scythe') pStackTxt += ` | 💀표적:${bEnemy.deathMarkStack}스택`;
+      playerExtraStack.textContent = pStackTxt;
+
+      const eHpPct = Math.max(0, (bEnemy.hp / bEnemy.maxHp) * 100);
+      const eShieldPct = Math.max(0, (bEnemy.shield / bEnemy.maxHp) * 100);
+
+      enemyHpBar.style.width = `${eHpPct}%`;
+      enemyShieldBar.style.width = `${eShieldPct}%`;
+      enemyHpText.textContent = `${Math.max(0, bEnemy.hp)} / ${bEnemy.maxHp}` + (bEnemy.shield > 0 ? ` (🛡️${bEnemy.shield})` : '');
+
+      let eStackTxt = `⚔️공격:${bEnemy.basicCount}스택`;
+      if (bEnemy.job.id === 'wand') eStackTxt += ` | ✨부활:${bEnemy.reviveStack}스택`;
+      if (bEnemy.job.id === 'scythe') eStackTxt += ` | 💀표적:${bPlayer.deathMarkStack}스택`;
+      enemyExtraStack.textContent = eStackTxt;
+
+      const friendlyWaiting = friendlyMode && friendlyTurnUid !== currentUser?.uid;
+      btnActBasic.disabled = isProcessingTurn || friendlyWaiting;
+      btnActBasic.textContent = `⚔️ 일반 공격 (${bPlayer.basicCount}회 누적)`;
+
+      const sk1Unlock = currentLevel >= 3 && bPlayer.basicCount >= bPlayer.sk1Next;
+      btnActSk1.disabled = !sk1Unlock || isProcessingTurn || friendlyWaiting;
+      btnActSk1.textContent = currentLevel < 3 ? `🔒 스킬1 (+3강 해금)` : (!sk1Unlock ? `스킬1 (일반공격 ${Math.max(0, bPlayer.sk1Next - bPlayer.basicCount)}회 후)` : `[스킬1] ${playerJob.skills[0].name}`);
+
+      const sk2Unlock = currentLevel >= 7 && bPlayer.basicCount >= bPlayer.sk2Next;
+      btnActSk2.disabled = !sk2Unlock || isProcessingTurn || friendlyWaiting;
+      btnActSk2.textContent = currentLevel < 7 ? `🔒 스킬2 (+7강 해금)` : (!sk2Unlock ? `스킬2 (일반공격 ${Math.max(0, bPlayer.sk2Next - bPlayer.basicCount)}회 후)` : `[스킬2] ${playerJob.skills[1].name}`);
+
+      const sk3Unlock = currentLevel >= 13 && bPlayer.basicCount >= bPlayer.sk3Next;
+      btnActSk3.disabled = !sk3Unlock || isProcessingTurn || friendlyWaiting;
+      btnActSk3.textContent = currentLevel < 13 ? `🔒 스킬3 (+13강 해금)` : (!sk3Unlock ? `스킬3 (일반공격 ${Math.max(0, bPlayer.sk3Next - bPlayer.basicCount)}회 후)` : `[스킬3] ${playerJob.skills[2].name}`);
+    }
+
+    function showToast(title, body, desc, callback, isInstantDeath = false) {
+      toastTitle.textContent = title;
+      toastBody.innerHTML = body;
+      toastDesc.textContent = desc;
+
+      if (isInstantDeath) {
+        dmgToast.classList.add('instant-death-effect');
+        toastTitle.innerHTML = `<span class="skull-icon">💀</span> ${title} <span class="skull-icon">💀</span>`;
+      } else {
+        dmgToast.classList.remove('instant-death-effect');
+      }
+
+      dmgToast.style.display = 'block';
+
+      setTimeout(() => {
+        dmgToast.style.display = 'none';
+        dmgToast.classList.remove('instant-death-effect');
+        if (callback) callback();
+      }, isInstantDeath ? 1500 : 1000);
+    }
+
+    function addLog(text) {
+      const item = document.createElement('div');
+      item.style.marginBottom = '3px';
+      item.innerHTML = text;
+      battleHistoryLog.appendChild(item);
+      battleHistoryLog.scrollTop = battleHistoryLog.scrollHeight;
+    }
+
+    function executeAction(actionType) {
+      if (isProcessingTurn) return;
+      isProcessingTurn = true;
+      updateBattleUI();
+
+      if (bPlayer.poisonTurns > 0 && bPlayer.poisonDmg > 0) {
+        const poison = bPlayer.poisonDmg;
+        applyDamageToUnit(bPlayer, poison);
+        bPlayer.poisonTurns--;
+        addLog(`🧪 독 피해! -${poison}`);
+        if (bPlayer.hp <= 0) { endBattle(false); return; }
+      }
+
+      if (bEnemy.delayedDmg > 0) {
+        applyDamageToUnit(bEnemy, bEnemy.delayedDmg);
+        addLog(`🔥 화염 폭발 이월 데미지 적용! -${bEnemy.delayedDmg}`);
+        bEnemy.delayedDmg = 0;
+      }
+
+      if (actionType === 'basic') {
+        let electricMult=bPlayer.job.id==='lightning_spear'?(1+(bPlayer.electricStacks||0)*0.1):1.0;
+        let dmg = Math.round(bPlayer.atk * bPlayer.nextDmgMult * electricMult * (0.9 + Math.random() * 0.2));
+        bPlayer.nextDmgMult = 1.0;
+        
+        let fireSpecialText = '';
+        const swordSpecial = triggerSwordSpecial(bPlayer);
+        const fireSpecial = triggerFireSwordSpecial(bPlayer, bEnemy);
+        const iceSpecial = triggerIceSwordSpecial(bPlayer, bEnemy);
+        const lightningSpecial = triggerLightningSpearSpecial(bPlayer, bEnemy);
+        const archerSpecial = triggerArcherSpecial(bPlayer, bEnemy, false);
+        if (swordSpecial.extra > 0) dmg += swordSpecial.extra;
+        if (fireSpecial.extra > 0) {
+          dmg += fireSpecial.extra;
+          fireSpecialText = ` 🔥 ${fireSpecial.name} +${fireSpecial.extra}`;
+        }
+        if (iceSpecial.extra > 0) dmg += iceSpecial.extra;
+        if (lightningSpecial.extra > 0) dmg += lightningSpecial.extra;
+        if (archerSpecial > 0) dmg += archerSpecial;
+applyDamageToUnit(bEnemy, dmg);
+
+        bPlayer.basicCount++;
+
+        const probabilisticSpecial = swordSpecial.probabilistic ? swordSpecial : fireSpecial.probabilistic ? fireSpecial : iceSpecial.probabilistic ? iceSpecial : lightningSpecial.probabilistic ? lightningSpecial : null;
+        addLog(`▶ <b>나:</b> 일반 공격! ${dmg} 데미지 (공격스택: ${bPlayer.basicCount})` + (probabilisticSpecial ? ` ❄️ <b>${probabilisticSpecial.name} 발동! (${Math.round(probabilisticSpecial.chance * 100)}% 확률)</b>` : ''));
+        if (swordSpecial.probabilistic) {
+          showToast(`⚔️ ${swordSpecial.name} 발동!`, `<span style="color:#f1c40f; font-size:1.3rem;">${Math.round(swordSpecial.chance * 100)}% 확률 발동</span>`, `⚔️ 추가 물리 피해 +${swordSpecial.extra}`, playerTurnFinish);
+        } else if (fireSpecial.probabilistic) {
+          const burnText = fireSpecial.dot ? '🔥 5초 화상 · 0.5초마다 최대 HP의 3% 피해' : `🔥 추가 화염 피해 +${fireSpecial.extra}`;
+          showToast(`🔥 ${fireSpecial.name} 발동!`, `<span style="color:#ff6b35; font-size:1.3rem;">${Math.round(fireSpecial.chance * 100)}% 확률 발동</span>`, burnText, fireSpecial.dot ? () => runFireBurn(bEnemy, () => { updateBattleUI(); if (friendlyMode) friendlyCommitState().catch(e=>console.warn('친선전 화상 동기화 실패',e)); }, playerTurnFinish) : playerTurnFinish);
+        } else if (lightningSpecial.probabilistic) {
+          showToast(`⚡ ${lightningSpecial.name} 발동!`, `<span style="color:#f1c40f; font-size:1.3rem;">${Math.round(lightningSpecial.chance*100)}% 확률 발동</span>`, `⚡ 추가 번개 피해 +${lightningSpecial.extra}${lightningSpecial.stun?' · 다음 행동 무효화':''}`, playerTurnFinish);
+        } else if (iceSpecial.probabilistic) {
+          const effectText = iceSpecial.freeze ? '❄️ 1턴 빙결' : iceSpecial.accuracy ? `❄️ 다음 스킬 적중률 ${Math.round(iceSpecial.accuracy * 100)}%` : `❄️ 추가 냉기 피해 +${iceSpecial.extra}`;
+          showToast(`❄️ ${iceSpecial.name} 발동!`, `<span style="color:#74d7ff; font-size:1.3rem;">${Math.round(iceSpecial.chance * 100)}% 확률 발동</span>`, effectText, playerTurnFinish);
+        } else {
+          showToast('⚔️ 일반 공격', `<span style="color:#e74c3c; font-size:1.3rem;">${dmg}</span> 데미지!`, `스킬 해금 게이지가 쌓입니다! (${bPlayer.basicCount}회)`, playerTurnFinish);
+        }
+
+      } else if (actionType === 'sk1') {
+        bPlayer.sk1Next = bPlayer.basicCount + 2;
+        applySkillEffect(0, playerTurnFinish);
+
+      } else if (actionType === 'sk2') {
+        bPlayer.sk2Next = bPlayer.basicCount + 3;
+        applySkillEffect(1, playerTurnFinish);
+
+      } else if (actionType === 'sk3') {
+        bPlayer.sk3Next = bPlayer.basicCount + 5;
+        applySkillEffect(2, playerTurnFinish);
+      }
+
+      function playerTurnFinish() {
+        updateBattleUI();
+        if (bEnemy.hp <= 0) {
+          if (bEnemy.reviveStack > 0) {
+            let reviveRate = 0.20 + (bEnemy.reviveStack - 1) * 0.10;
+            bEnemy.hp = Math.round(bEnemy.maxHp * reviveRate);
+            bEnemy.reviveStack = 0;
+            showToast('✨ 적 부활!', `상대가 부활하였습니다! HP <span style="color:#2ecc71;">${bEnemy.hp}</span> 복구! (스택 초기화)`, '', () => setTimeout(enemyTurn, 300));
+            return;
+          }
+          endBattle(true);
+          return;
+        }
+        if (friendlyMode) { isProcessingTurn = false; friendlyCommitState().catch(e=>console.warn('친선전 저장 실패',e)); return; }
+        setTimeout(() => enemyTurn(actionType), 300);
+      }
+    }
+
+    function applySkillEffect(skillIdx, doneCallback) {
+      const sk = playerJob.skills[skillIdx];
+      let title = `✨ [스킬${skillIdx+1}] ${sk.name}`;
+      let bodyText = '';
+      let descText = sk.desc;
+      let isDeathAnim = false;
+
+      if (playerJob.id === 'sword') {
+        if (skillIdx === 0) {
+          let totalDmg = Math.round(bPlayer.atk * 0.4) * 3;
+          applyDamageToUnit(bEnemy, totalDmg);
+          bodyText = `3연속 베기 성공! 총 <span style="color:#e74c3c;">${totalDmg}</span> 데미지!`;
+        } else if (skillIdx === 1) {
+          bEnemy.swordGimmickHp = bEnemy.hp;
+          let dotDmg = Math.round(bEnemy.hp * 0.4) + Math.round(bPlayer.atk * 0.6);
+          applyDamageToUnit(bEnemy, dotDmg);
+          bodyText = `검기 독 피해! <span style="color:#e74c3c;">${dotDmg}</span> 데미지!`;
+        } else if (skillIdx === 2) {
+          // 체력 비례 데미지 적용
+          let scaledDmg = Math.round(bEnemy.hp * 0.25) + Math.round(bPlayer.atk * 0.8);
+          applyDamageToUnit(bEnemy, scaledDmg);
+          bodyText = `<span style="color:#e74c3c; font-size:1.3rem;">${scaledDmg}</span> 체력 비례 피해!`;
+        }
+      } else if (playerJob.id === 'fire_sword') {
+        if (skillIdx === 0) {
+          applyDamageToUnit(bEnemy, 1);
+          bEnemy.delayedDmg = Math.round(bEnemy.maxHp * 0.15);
+          bodyText = `1 데미지를 주고 화염 이월! (다음 턴 상대 현재 HP의 15% 피해)`;
+        } else if (skillIdx === 1) {
+          bEnemy.nextDmgMult = 0.1;
+          bodyText = `상대 무기를 융해시켰습니다! (다음 턴 상대 공격력 10%로 저하)`;
+        } else if (skillIdx === 2) {
+          let cutDmg = Math.round(bEnemy.hp * 0.3);
+          applyDamageToUnit(bEnemy, cutDmg);
+          bodyText = `상대 남은 HP의 30%인 <span style="color:#e74c3c;">${cutDmg}</span> 데미지!`;
+        }
+      } else if (playerJob.id === 'ice_sword') {
+        if (skillIdx === 0) {
+          let dmg = Math.round(bPlayer.atk * 0.85);
+          applyDamageToUnit(bEnemy, dmg);
+          bEnemy.debuffHitRate = 0.4;
+          bodyText = `<span style="color:#e74c3c;">${dmg}</span> 데미지! (다음 턴 적 스킬 적중률 40%)`;
+        } else if (skillIdx === 1) {
+          if (Math.random() < 0.80) {
+            let dmg = Math.round(bPlayer.atk * 2.73);
+            applyDamageToUnit(bEnemy, dmg);
+            bodyText = `❄️ 절대 0도 압축 성공! <span style="color:#e74c3c; font-size:1.3rem;">${dmg}</span> 데미지!`;
+          } else {
+            bodyText = `❄️ 절대 0도 압축 실패... (0 데미지)`;
+          }
+        } else if (skillIdx === 2) {
+          bEnemy.skipTurnCount = 1;
+          if (Math.random() < 0.8) bEnemy.skipTurnCount = 2;
+          bodyText = `🧊 상대가 얼어붙었습니다! (${bEnemy.skipTurnCount}턴 간 행동 불가)`;
+        }
+      } else if (playerJob.id === 'bow') {
+        if (skillIdx === 0) {
+          let dmg = Math.round(bPlayer.atk * 1.8);
+          applyDamageToUnit(bEnemy, dmg);
+          bodyText = `<span style="color:#e74c3c; font-size:1.3rem;">${dmg}</span> (180%) 정밀 데미지!`;
+        } else if (skillIdx === 1) {
+          bEnemy.debuffHitRate = 0.1;
+          bodyText = `🎯 실명 적중! 상대 스킬 적중률이 10%로 감소합니다.`;
+        } else if (skillIdx === 2) {
+          bEnemy.selfAttacking = true;
+          bodyText = `💘 홀림 상태! 다음 턴 상대가 자해하게 함.`;
+        }
+      } else if (playerJob.id === 'lightning_spear') {
+        if (skillIdx === 0) {
+          let d = Math.round(bPlayer.atk * 2.2);
+          applyDamageToUnit(bEnemy, d);
+          bodyText = `<span style="color:#e74c3c; font-size:1.3rem;">${d}</span> 감전 데미지!`;
+        } else if (skillIdx === 1) {
+          let nullRate = (bEnemy.job.id.includes('sword')) ? 0.95 : 0.20;
+          if (Math.random() < nullRate) {
+            bEnemy.skipTurnCount = 1;
+            bodyText = `⚡ 전류 통전! 다음 턴 상대 공격 무효화!`;
+          } else {
+            bodyText = `⚡ 낙뢰 소환 무효화 실패.`;
+          }
+        } else if (skillIdx === 2) {
+          // 전광의 무인 스킬 3 개편 로직 (체력 30%깎고 90%확률로 남은 체력 30% 깎고, 맞으면 85%, 80%...)
+          let totalDmg = 0;
+          let currentChance = 0.90;
+          let hitsCount = 0;
+
+          // 첫 타격 (체력 30%)
+          let firstDmg = Math.round(bEnemy.hp * 0.3);
+          applyDamageToUnit(bEnemy, firstDmg);
+          totalDmg += firstDmg;
+          hitsCount++;
+
+          // 연속 타격 전개
+          while (bEnemy.hp > 0 && Math.random() < currentChance) {
+            let nextDmg = Math.round(bEnemy.hp * 0.3);
+            applyDamageToUnit(bEnemy, nextDmg);
+            totalDmg += nextDmg;
+            hitsCount++;
+            currentChance -= 0.05; // 90% -> 85% -> 80% ...
+            if (currentChance < 0.05) currentChance = 0.05;
+          }
+
+          bodyText = `🌩️ 뇌신의 심판 연속 발동 (${hitsCount}회 연쇄)! 총 <span style="color:#e74c3c;">${totalDmg}</span> 피해!`;
+        }
+      } else if (playerJob.id === 'wand') {
+        if (skillIdx === 0) {
+          bPlayer.shield += Math.round(bPlayer.maxHp*0.30);
+          bodyText=`🛡️ 최대 체력의 30%만큼 보호막 획득!`;
+        } else if (skillIdx === 1) {
+          let rand = Math.random();
+          if (rand < 0.33) {
+            let dmg=Math.round(bPlayer.atk*1.8); applyDamageToUnit(bEnemy,dmg); bodyText=`🔥 불 마법 발동! <span style="color:#e74c3c;">${dmg}</span> 데미지!`;
+          } else if (rand < 0.66) {
+            let heal=Math.round(bPlayer.maxHp*0.30); bPlayer.hp=Math.min(bPlayer.maxHp,bPlayer.hp+heal); bodyText=`💚 회복 마법 발동! 체력 <span style="color:#2ecc71;">${heal}</span> 회복!`;
+          } else {
+            let waterDmg=(bEnemy.job.id==='fire_sword'||bEnemy.job.id==='lightning_spear')?Math.round(bPlayer.atk*2.0):Math.round(bPlayer.atk*1.3);
+            applyDamageToUnit(bEnemy, waterDmg);
+            bodyText = `💧 물 마법 발동! <span style="color:#e74c3c;">${waterDmg}</span> 데미지!`;
+          }
+        } else if (skillIdx === 2) {
+          if (bEnemy.job.id === 'bow') {
+            bEnemy.reviveStack++;
+            bodyText = `⚠️ <b>궁수에게 부활 스택이 빼앗겼습니다!</b>`;
+          } else {
+            bPlayer.reviveStack++;
+            bodyText = `✨ 부활 스택 중첩 성공! (현재 부활 스택: ${bPlayer.reviveStack})`;
+          }
+        }
+      } else if (playerJob.id === 'scythe') {
+        if (skillIdx === 0) {
+          let stealHp = Math.round(bEnemy.hp * 0.1);
+          applyDamageToUnit(bEnemy, stealHp);
+          bPlayer.hp = Math.min(bPlayer.maxHp, bPlayer.hp + stealHp);
+          bodyText = `💀 영혼 흡수! 상대 체력 <span style="color:#e74c3c;">${stealHp}</span> 강탈 및 회복!`;
+        } else if (skillIdx === 1) {
+          bPlayer.shield += Math.round(bPlayer.maxHp * 0.444);
+          bodyText = `🛡️ <b>사신의 저주 회색 보호막 형성!</b> (보호막 +${bPlayer.shield})`;
+        } else if (skillIdx === 2) {
+          if (bEnemy.selfAttacking && Math.random() < 0.20) {
+            bPlayer.hp = 0;
+            isDeathAnim = true;
+            bodyText = `💘 <b>큐피트의 홀림 반사!</b> 자해 사망!`;
+          } else {
+            let instantRate = 0.25;
+            if (Math.random() < instantRate) {
+              bEnemy.hp = 0;
+              bEnemy.deathMarkStack = 0;
+              isDeathAnim = true;
+              bodyText = `👑 <b>명계의 문이 열렸습니다!</b> 상대 즉사!`;
+            } else {
+              bodyText = `명계의 문 실패... 추가 효과 없음`;
+            }
+          }
+        }
+      } else if (playerJob.id === 'assassin') {
+        if (skillIdx === 0) {
+          let dmg = Math.round(bPlayer.atk * 1.5);
+          applyDamageToUnit(bEnemy, dmg);
+          bodyText = `🗡️ 기습 성공! <span style="color:#e74c3c;">${dmg}</span> 데미지!`;
+        } else if (skillIdx === 1) {
+          let dmg = Math.round(bPlayer.atk * 1.5 + bEnemy.maxHp * 0.05);
+          applyDamageToUnit(bEnemy, dmg);
+          bEnemy.poisonDmg = Math.max(bEnemy.poisonDmg || 0, Math.round(bEnemy.maxHp * 0.05));
+          bEnemy.poisonTurns = 2;
+          bodyText = `🧪 독성 가루 살포! <span style="color:#e74c3c;">${dmg}</span> 피해 + 2턴 독`;
+        } else if (skillIdx === 2) {
+          bPlayer.shield += 120;
+          bodyText = `👥 그림자 분신! 회피 및 보호막 <span style="color:#f1c40f;">+120</span> 생성!`;
+        }
+      } else if (playerJob.id === 'berserker') {
+        if (skillIdx === 0) {
+          let selfCost = Math.round(bPlayer.hp * 0.18);
+          bPlayer.hp -= selfCost;
+          let dmg = Math.round(bPlayer.atk * 1.8);
+          applyDamageToUnit(bEnemy, dmg);
+          bodyText = `🪓 체력 <span style="color:#e74c3c;">${selfCost}</span> 소모 후 광폭한 타격! <span style="color:#e74c3c;">${dmg}</span> 피해!`;
+        } else if (skillIdx === 1) {
+          let dmg = Math.round(bPlayer.atk * 1.18);
+          applyDamageToUnit(bEnemy, dmg);
+          bPlayer.shield += 60;
+          bodyText = `🪓 광란의 도약! <span style="color:#e74c3c;">${dmg}</span> 피해 및 보호막 획득!`;
+        } else if (skillIdx === 2) {
+          bPlayer.shield += Math.round(bPlayer.maxHp * 0.06);
+          bodyText = `🪓 불굴의 투지! 보호막 <span style="color:#f1c40f;">+${Math.round(bPlayer.maxHp * 0.06)}</span> 전개!`;
+        }
+      } else if (playerJob.id === 'paladin') {
+        if (skillIdx === 0) {
+          let dmg = Math.round(bPlayer.atk * 1.6);
+          applyDamageToUnit(bEnemy, dmg);
+          bodyText = `🛡️ 신성한 일격! <span style="color:#e74c3c;">${dmg}</span> 피해!`;
+        } else if (skillIdx === 1) {
+          bPlayer.shield += Math.round(bPlayer.maxHp * 0.28);
+          bodyText = `🛡️ 수호의 결계! 최대 HP의 28% 보호막 생성!`;
+        } else if (skillIdx === 2) {
+          let holyDmg = Math.round(bEnemy.hp * 0.30);
+          applyDamageToUnit(bEnemy, holyDmg);
+          bodyText = `🛡️ 천상의 심판! 상대 체력 비례 <span style="color:#e74c3c;">${holyDmg}</span> 신성 피해!`;
+        }
+      }
+
+      addLog(`▶ <b>나:</b> [${sk.name}] 사용!`);
+      showToast(title, bodyText, descText, doneCallback, isDeathAnim);
+    }
+
+    function enemyTurn(mirroredAction = 'basic', skipSkill3 = false) {
+      if (bEnemy.poisonTurns > 0 && bEnemy.poisonDmg > 0) {
+        const poison = bEnemy.poisonDmg;
+        applyDamageToUnit(bEnemy, poison);
+        bEnemy.poisonTurns--;
+        addLog(`🧪 적 독 피해! -${poison}`);
+        if (bEnemy.hp <= 0) { endBattle(true); return; }
+      }
+      if (bEnemy.skipTurnCount > 0) {
+        bEnemy.skipTurnCount--;
+        addLog(`🧊 상대가 얼어붙어 이번 턴 행동 불가!`);
+        showToast('🧊 상대 행동 불가', `상대가 얼어붙어 턴을 건너뜁니다!`, '나의 턴이 다시 시작됩니다.', finishTurnCycle);
+        return;
+      }
+      if (bEnemy.selfAttacking) {
+        bEnemy.selfAttacking = false;
+        let selfDmg = Math.round(bEnemy.atk * 0.8);
+        applyDamageToUnit(bEnemy, selfDmg);
+        addLog(`💘 상대 자해 발생! ${selfDmg} 데미지`);
+        showToast('💘 상대 자해', `상대가 홀려 자신을 공격했습니다! <span style="color:#e74c3c;">${selfDmg}</span> 피해`, '', () => { if (bEnemy.hp <= 0) endBattle(true); else finishTurnCycle(); });
+        return;
+      }
+      if (bEnemy.swordGimmickHp !== null) {
+        if (bEnemy.hp > 0) { let revertedHp=bEnemy.swordGimmickHp; let penaltyDmg=Math.round(revertedHp*0.05); bEnemy.hp=revertedHp-penaltyDmg; addLog(`⚠️ 검기 처치 실패! 상대 HP 원상복구 후 5% 손실 적용.`); }
+        bEnemy.swordGimmickHp=null;
+      }
+      bEnemy.basicCount++;
+      let selectedSkill = mirroredAction === 'sk1' ? 0 : mirroredAction === 'sk2' ? 1 : mirroredAction === 'sk3' ? 2 : -1;
+      if (skipSkill3 && selectedSkill === 2) selectedSkill = -1;
+      if (selectedSkill !== -1) {
+        if (Math.random() > bEnemy.debuffHitRate) { bEnemy.debuffHitRate=1.0; addLog(`💥 적의 [${bEnemy.job.skills[selectedSkill].name}] 스킬이 빗나갔습니다!`); showToast('💥 적의 공격 실패', `적의 스킬이 빗나갔습니다!`, '', finishTurnCycle); return; }
+        bEnemy.debuffHitRate=1.0;
+        executeEnemySkill(selectedSkill);
+      } else {
+        let eDmgMult=bEnemy.nextDmgMult; bEnemy.nextDmgMult=1.0;
+        let aiDmg=Math.round(bEnemy.atk*eDmgMult*(0.85+Math.random()*0.3));
+        applyDamageToUnit(bPlayer,aiDmg);
+        addLog(`💥 <b>적:</b> 일반 공격! ${aiDmg} 데미지 (공격스택: ${bEnemy.basicCount})`);
+        showToast('💥 적의 공격', `적의 공격으로 <span style="color:#e74c3c; font-size:1.3rem;">${aiDmg}</span> 데미지를 입었습니다!`, '', checkPlayerStatus);
+      }
+
+      function checkPlayerStatus() {
+        if (bPlayer.hp <= 0) {
+          if (bPlayer.reviveStack > 0) {
+            let reviveRate = 0.20 + (bPlayer.reviveStack - 1) * 0.10;
+            bPlayer.hp = Math.round(bPlayer.maxHp * reviveRate);
+            bPlayer.reviveStack = 0;
+            showToast('✨ 구원의 마법!', `부활하였습니다! HP <span style="color:#2ecc71;">${bPlayer.hp}</span> 복구!`, '', finishTurnCycle);
+            return;
+          }
+          endBattle(false);
+        } else {
+          finishTurnCycle();
+        }
+      }
+
+      function executeEnemySkill(sIdx) {
+        const sk = bEnemy.job.skills[sIdx];
+        let title = `💥 적의 [스킬${sIdx+1}: ${sk.name}]!`;
+        let bodyText = '';
+        let descText = sk.desc;
+        let isDeathAnim = false;
+
+        if (bEnemy.job.id === 'sword') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 0.4) * 3;
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `적 연속 베기! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else if (sIdx === 1) {
+            let d = Math.round(bPlayer.hp * 0.4) + Math.round(bEnemy.atk * 0.6);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `적 검기독 방출! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else {
+            let scaledD = Math.round(bPlayer.hp * 0.25) + Math.round(bEnemy.atk * 0.8);
+            applyDamageToUnit(bPlayer, scaledD, true);
+            bodyText = `🔥 <b>적 용의 격노!</b> <span style="color:#e74c3c; font-size:1.3rem;">${scaledD}</span> 피해!`;
+          }
+        } else if (bEnemy.job.id === 'fire_sword') {
+          if (sIdx === 0) {
+            applyDamageToUnit(bPlayer, 1);
+            bPlayer.delayedDmg = Math.round(bPlayer.maxHp * 0.15);
+            bodyText = `화염 폭발 이월! (다음 턴 최대 HP의 <span style="color:#e74c3c;">15%</span> 피해)`;
+          } else if (sIdx === 1) {
+            bPlayer.nextDmgMult = 0.1;
+            bodyText = `무기 융해! 다음 턴 나의 공격력 10% 저하`;
+          } else {
+            let d = Math.round(bPlayer.hp * 0.3);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🔥 <b>적 종말의 화염!</b> <span style="color:#e74c3c; font-size:1.3rem;">${d}</span> 피해!`;
+          }
+        } else if (bEnemy.job.id === 'ice_sword') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 0.85);
+            applyDamageToUnit(bPlayer, d);
+            bPlayer.debuffHitRate = 0.4;
+            bodyText = `<span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else if (sIdx === 1) {
+            if (Math.random() < 0.80) {
+              let d=Math.round(bEnemy.atk*2.73); applyDamageToUnit(bPlayer,d); bodyText=`❄️ 적 절대 0도 성공! <span style="color:#e74c3c; font-size:1.3rem;">${d}</span> 피해!`;
+            } else { bodyText = `❄️ 적 절대 0도 실패!`; }
+          } else {
+            bPlayer.skipTurnCount = 1;
+            bodyText = `🧊 <b>적 빙하의 서약!</b> 다음 턴 나의 행동 불가!`;
+          }
+        } else if (bEnemy.job.id === 'bow') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 1.8);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `<span style="color:#e74c3c;">${d}</span> 조준 사격 피해!`;
+          } else if (sIdx === 1) {
+            bPlayer.debuffHitRate = 0.1;
+            bodyText = `🎯 실명 상태!`;
+          } else {
+            bPlayer.selfAttacking = true;
+            bodyText = `💘 <b>적 큐피트의 화살!</b> 자해 유발!`;
+          }
+        } else if (bEnemy.job.id === 'lightning_spear') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 2.2);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `<span style="color:#e74c3c;">${d}</span> 감전 피해!`;
+          } else if (sIdx === 1) {
+            let nullRate = (bPlayer.job.id.includes('sword')) ? 0.95 : 0.20;
+            if (Math.random() < nullRate) {
+              bPlayer.skipTurnCount = 1;
+              bodyText = `⚡ 낙뢰 소환! 다음 턴 상대 행동 무효화!`;
+            } else {
+              bodyText = `⚡ 낙뢰 소환 무효화 실패!`;
+            }
+          } else {
+            let firstD = Math.round(bPlayer.hp * 0.3);
+            applyDamageToUnit(bPlayer, firstD);
+            bodyText = `🌩️ <b>적 뇌신의 심판!</b> <span style="color:#e74c3c; font-size:1.3rem;">${firstD}</span> 피해!`;
+          }
+        } else if (bEnemy.job.id === 'wand') {
+          if (sIdx === 0) {
+            bEnemy.nextDmgMult = 2.2;
+            bodyText = `적 마력 증폭!`;
+          } else if (sIdx === 1) {
+            let rand=Math.random();
+            if(rand<0.33){let d=Math.round(bEnemy.atk*1.8);applyDamageToUnit(bPlayer,d);bodyText=`🔥 불 마법! ${d} 피해!`;}
+            else if(rand<0.66){let heal=Math.round(bEnemy.maxHp*0.30);bEnemy.hp=Math.min(bEnemy.maxHp,bEnemy.hp+heal);bodyText=`💚 회복 마법! ${heal} 회복!`;}
+            else{let d=(bPlayer.job.id==='fire_sword'||bPlayer.job.id==='lightning_spear')?Math.round(bEnemy.atk*2.0):Math.round(bEnemy.atk*1.3);applyDamageToUnit(bPlayer,d);bodyText=`💧 물 마법! ${d} 피해!`;}
+          } else {
+            bEnemy.reviveStack++;
+            bodyText = `✨ <b>적 구원의 마법!</b>`;
+          }
+        } else if (bEnemy.job.id === 'scythe') {
+          if (sIdx === 0) {
+            let steal = Math.round(bPlayer.hp * 0.1);
+            applyDamageToUnit(bPlayer, steal);
+            bEnemy.hp = Math.min(bEnemy.maxHp, bEnemy.hp + steal);
+            bodyText = `💀 적 영혼 흡수!`;
+          } else if (sIdx === 1) {
+            bEnemy.shield += Math.round(bEnemy.maxHp * 0.444);
+            bodyText = `🛡️ <b>적 사신의 저주 보호막 형성!</b>`;
+          } else {
+            let instantRate = 0.25;
+            if (Math.random() < instantRate) {
+              bPlayer.hp = 0;
+              bPlayer.deathMarkStack = 0;
+              isDeathAnim = true;
+              bodyText = `👑 <b>적 명계의 문 발동! 즉사!</b>`;
+            } else {
+              bodyText = `적 명계의 문 실패... 추가 효과 없음`;
+            }
+          }
+        } else if (bEnemy.job.id === 'assassin') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 1.6);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🗡️ 적 기습! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else if (sIdx === 1) {
+            let dmg = Math.round(bEnemy.atk * 1.5 + bPlayer.maxHp * 0.05);
+            applyDamageToUnit(bPlayer, dmg);
+            bPlayer.poisonDmg = Math.max(bPlayer.poisonDmg || 0, Math.round(bPlayer.maxHp * 0.05));
+            bPlayer.poisonTurns = 2;
+            bodyText = `🧪 적 독성 가루! <span style="color:#e74c3c;">${dmg}</span> 피해 + 2턴 독!`;
+          } else {
+            bEnemy.shield += 120;
+            bodyText = `👥 적 그림자 분신 보호막 생성!`;
+          }
+        } else if (bEnemy.job.id === 'berserker') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 1.8);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🪓 적 피의 갈증! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else if (sIdx === 1) {
+            let d = Math.round(bEnemy.atk * 1.18);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🪓 적 광란의 도약! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else {
+            bEnemy.shield += Math.round(bEnemy.maxHp * 0.06);
+            bodyText = `🪓 적 불굴의 투지 보호막 전개!`;
+          }
+        } else if (bEnemy.job.id === 'paladin') {
+          if (sIdx === 0) {
+            let d = Math.round(bEnemy.atk * 1.6);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🛡️ 적 신성한 일격! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          } else if (sIdx === 1) {
+            bEnemy.shield += Math.round(bEnemy.maxHp * 0.28);
+            bodyText = `🛡️ 적 수호의 결계 보호막 생성!`;
+          } else {
+            let d = Math.round(bPlayer.hp * 0.30);
+            applyDamageToUnit(bPlayer, d);
+            bodyText = `🛡️ 적 천상의 심판! <span style="color:#e74c3c;">${d}</span> 피해!`;
+          }
+        }
+
+        addLog(`💥 <b>적:</b> [${sk.name}] 사용!`);
+        showToast(title, bodyText, descText, checkPlayerStatus, isDeathAnim);
+      }
+    }
+
+    function finishTurnCycle() {
+      isProcessingTurn=false;
+      updateBattleUI();
+      if (bPlayer.skipTurnCount > 0) {
+        bPlayer.skipTurnCount--;
+        isProcessingTurn=true;
+        addLog(`🧊 나는 얼어붙어 이번 턴 행동 불가!`);
+        showToast('🧊 내 행동 불가', `빙결의 서약으로 이번 턴을 건너뜁니다!`, '상대는 스킬3을 제외한 행동을 합니다.', () => setTimeout(() => enemyTurn('basic', true), 300));
+      }
+    }
+
+    function endBattle(isWin) {
+      if (friendlyMode) {
+        const winnerUid = isWin ? currentUser?.uid : (friendlyRole==='p1' ? '' : '');
+        if (friendlyRoomId && window.firebaseGame) {
+          window.firebaseGame.setDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb,'friendlyRooms',friendlyRoomId), {status:'finished', winnerUid: isWin ? currentUser.uid : null, seq:friendlySeq+1, updatedAt:Date.now()},{merge:true}).catch(e=>console.warn('친선전 종료 저장 실패',e));
+        }
+        showToast(isWin ? '🏆 친선전 승리!' : '💀 친선전 패배!', isWin ? '상대를 쓰러뜨렸습니다!' : '전투에서 패배했습니다.', '친선전에서는 코인과 승수를 지급하지 않습니다.', () => { battleScreen.style.display='none'; isProcessingTurn=false; friendlyMode=false; if(friendlyPollTimer){clearInterval(friendlyPollTimer);friendlyPollTimer=null;} });
+        return;
+      }
+      let reward = 0;
+      if (isWin) {
+        winCount++;
+        reward = 5000 + (currentLevel * 100);
+        coins += reward;
+        showToast(`🏆 승리하였습니다!`, `보상: <span style="color:#f1c40f; font-size:1.3rem;">+${reward.toLocaleString()} G</span>`, '', finish);
+      } else {
+        reward = 500;
+        coins += reward;
+        showToast(`💀 패배하였습니다...`, `위로금: +${reward.toLocaleString()} G`, '', finish);
+      }
+
+      function finish() {
+        battleScreen.style.display = 'none';
+        isProcessingTurn = false;
+        saveData();
+        renderUI();
+      }
+    }
+
+    btnBattle.addEventListener('click', () => startBattle());
+    btnOpenFriendly.addEventListener('click', () => { friendlyModal.style.display='flex'; setFriendlyStatus(''); });
+    btnFriendlyClose.addEventListener('click', () => { friendlyModal.style.display='none'; });
+    btnFriendlyCreate.addEventListener('click', () => createFriendlyRoom().catch(e=>setFriendlyStatus('방 생성 실패: '+(e.message||e),'fail')));
+    btnFriendlyJoin.addEventListener('click', () => joinFriendlyRoom().catch(e=>setFriendlyStatus('방 참가 실패: '+(e.message||e),'fail')));
+
+    btnActBasic.addEventListener('click', () => { if(friendlyMode){ submitFriendlyAction('basic'); } else executeAction('basic'); });
+    btnActSk1.addEventListener('click', () => { if(friendlyMode){ submitFriendlyAction('sk1'); } else executeAction('sk1'); });
+    btnActSk2.addEventListener('click', () => { if(friendlyMode){ submitFriendlyAction('sk2'); } else executeAction('sk2'); });
+    btnActSk3.addEventListener('click', () => { if(friendlyMode){ submitFriendlyAction('sk3'); } else executeAction('sk3'); });
+
+    async function openRanking() {
+      if (!window.firebaseGame) return;
+      rankingList.innerHTML = '불러오는 중...';
+      rankingModal.style.display = 'flex';
+      try {
+        const q = window.firebaseGame.query(
+          window.firebaseGame.collection(window.firebaseGame.firebaseDb, 'players'),
+          window.firebaseGame.orderBy('wins', 'desc'),
+          window.firebaseGame.limit(20)
+        );
+        const snap = await window.firebaseGame.getDocs(q);
+        if (snap.empty) { rankingList.innerHTML = '<div>아직 랭킹 데이터가 없습니다.</div>'; return; }
+        let rank = 0;
+        rankingList.innerHTML = '';
+        snap.forEach(d => {
+          rank++;
+          const x = d.data();
+          const job = JOBS.find(j => j.id === x.jobId);
+          const jobText = job ? job.jobBaseName : '직업 없음';
+          const row = document.createElement('div');
+          row.style.marginBottom = '6px';
+          row.innerHTML = `<b>${rank}위</b> ${x.username || '이름 없음'} (${jobText}) — ${Number(x.wins)||0}승`;
+          rankingList.appendChild(row);
+        });
+      } catch (e) {
+        rankingList.innerHTML = '랭킹을 불러오지 못했습니다. Firestore 보안 규칙과 데이터베이스 생성을 확인해주세요.';
+        console.warn(e);
+      }
+    }
+    btnOpenRanking.addEventListener('click', openRanking);
+    btnRankingClose.addEventListener('click', () => { rankingModal.style.display = 'none'; });
+
+    function usernameToEmail(username) { const encoded = btoa(unescape(encodeURIComponent(username))).replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_'); return `u_${encoded}@makeagame.local`; }
+    // Firebase 인증용 이메일(u_...)을 실제 게임 아이디로 되돌립니다.
+    // 기존 계정의 Firestore username 값이 잘못 저장되어 있어도 로그인 아이디를 복구할 수 있습니다.
+    function emailToUsername(email) {
+      try {
+        const local = String(email || '').split('@')[0];
+        if (!local.startsWith('u_')) return '';
+        let encoded = local.slice(2).replace(/-/g,'+').replace(/_/g,'/');
+        while (encoded.length % 4) encoded += '=';
+        return decodeURIComponent(escape(atob(encoded)));
+      } catch (_) { return ''; }
+    }
+    function setLoginStatus(text, type='') { loginStatus.className = `login-status ${type}`; loginStatus.textContent = text; }
+    function validUsername(v) { return /^[\p{L}\p{N}_]{2,20}$/u.test(v); }
+
+    async function doLogin(isSignup) {
+      const username = loginUsername.value.trim();
+      const password = loginPassword.value;
+      if (!validUsername(username)) { setLoginStatus('아이디는 영문/숫자/_ 3~20자로 입력해주세요.', 'fail'); return; }
+      if (password.length < 6) { setLoginStatus('비밀번호는 6자 이상이어야 합니다.', 'fail'); return; }
+      // Firebase가 아직 준비되지 않았다면 버튼을 잠근 채 오래 기다리지 않습니다.
+      // 모바일에서 SDK 로딩이 막힌 경우 즉시 원인을 표시합니다.
+      if (!window.firebaseReady || !window.firebaseGame) {
+        const reason = window.firebaseInitError ||
+          (typeof firebase === 'undefined' ? 'Firebase SDK가 로드되지 않았습니다.' : 'Firebase 초기화가 아직 완료되지 않았습니다.');
+        setLoginStatus('Firebase 연결 실패: ' + reason, 'fail');
+        return;
+      }
+      btnLogin.disabled = btnSignup.disabled = true;
+      setLoginStatus('Firebase 인증 중...', 'warning');
+      const withTimeout = (promise, ms = 15000) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error('Firebase 요청 시간 초과 (15초) — Firebase Auth 서버 응답 없음'), { code: 'firebase/timeout' })), ms))]);
+      try {
+        const email = usernameToEmail(username);
+        let cred;
+        if (isSignup) {
+          cred = await withTimeout(window.firebaseGame.createUserWithEmailAndPassword(window.firebaseGame.firebaseAuth, email, password));
+          await window.firebaseGame.setDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', cred.user.uid), { username, coins: 1000, jobId: null, level: 1, wins: 0, updatedAt: Date.now() }, { merge: true });
+          currentUsername = username;
+          setLoginStatus('계정이 생성되었습니다!', 'success');
+        } else {
+          cred = await withTimeout(window.firebaseGame.signInWithEmailAndPassword(window.firebaseGame.firebaseAuth, email, password));
+          // 로그인에 성공한 아이디를 표시 이름의 기준으로 사용하고, 기존 계정의 잘못된 username도 자동 수정합니다.
+          currentUsername = username;
+          await window.firebaseGame.setDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', cred.user.uid), { username: currentUsername, updatedAt: Date.now() }, { merge: true });
+          if (onlineUserEl) onlineUserEl.textContent = `로그인: ${currentUsername}`;
+          setLoginStatus('로그인 성공!', 'success');
+        }
+      } catch (e) {
+        let msg = '로그인에 실패했습니다.';
+        if (e.code === 'auth/email-already-in-use') msg = '이미 존재하는 아이디입니다. 로그인 버튼을 사용해주세요.';
+        else if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') msg = '아이디 또는 비밀번호가 올바르지 않습니다.';
+        else if (e.code === 'auth/operation-not-allowed') msg = 'Firebase에서 이메일/비밀번호 로그인을 먼저 활성화해주세요.';
+         else if (e.code === 'auth/network-request-failed') msg = 'Firebase 인증 서버에 연결하지 못했습니다. 모바일 네트워크 또는 브라우저를 확인해주세요.';
+         else if (e.code === 'auth/unauthorized-domain') msg = '현재 접속 주소가 Firebase 인증 도메인에 등록되지 않았습니다.';
+         else if (e.code === 'firebase/timeout') msg = 'Firebase Auth 서버 응답 시간 초과(15초) — 모바일 네트워크 또는 Firebase Auth 설정을 확인해주세요.';
+         else if (e && e.code) msg = `Firebase 오류(${e.code}): ${e.message || '상세 메시지 없음'}`;
+        setLoginStatus(msg, 'fail');
+      } finally { btnLogin.disabled = btnSignup.disabled = false; }
+    }
+    btnLogin.addEventListener('click', () => doLogin(false));
+    btnSignup.addEventListener('click', () => doLogin(true));
+    loginPassword.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(false); });
+
+    btnLogout.addEventListener('click', async () => {
+      if (!window.firebaseGame) return;
+      try {
+        btnLogout.disabled = true;
+        // 마지막 변경사항이 Firestore에 저장된 뒤 로그아웃합니다.
+        await saveOnlineData();
+        await window.firebaseGame.signOut(window.firebaseGame.firebaseAuth);
+      } catch (e) {
+        console.warn('로그아웃 전 저장 실패:', e);
+      } finally {
+        btnLogout.disabled = false;
+      }
+    });
+
+    async function initFirebaseAuth() {
+      if (authInitialized || !window.firebaseGame) return;
+      authInitialized = true;
+      window.firebaseGame.onAuthStateChanged(window.firebaseGame.firebaseAuth, async user => {
+        if (!user) {
+          currentUser = null; currentUsername = ''; loginOverlay.style.display = 'flex'; return;
+        }
+        currentUser = user;
+        let savedUsername = '';
+        try {
+          const snap = await window.firebaseGame.getDoc(window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', user.uid));
+          savedUsername = snap.exists() ? String(snap.data().username || '').trim() : '';
+        } catch (e) {
+          console.warn('사용자 이름 불러오기 실패:', e);
+        }
+
+        // 화면에는 Firestore에 저장된 실제 게임 아이디를 최우선으로 표시합니다.
+        // Firebase 인증용 u_... 이메일 주소를 게임 아이디로 잘못 표시하지 않습니다.
+        const recoveredUsername = emailToUsername(user.email);
+        const isInternalAuthName = v => /^u_[A-Za-z0-9_-]+$/.test(String(v || ''));
+        if (savedUsername && !isInternalAuthName(savedUsername)) {
+          currentUsername = savedUsername;
+        } else if (recoveredUsername && !isInternalAuthName(recoveredUsername)) {
+          currentUsername = recoveredUsername;
+        } else {
+          // Firestore를 일시적으로 읽지 못하더라도 이전에 저장한 표시 이름을 우선 사용합니다.
+          const cachedUsername = String(localStorage.getItem('game_username_v8') || '').trim();
+          currentUsername = cachedUsername && !isInternalAuthName(cachedUsername)
+            ? cachedUsername
+            : (savedUsername && !isInternalAuthName(savedUsername) ? savedUsername : '');
+        }
+
+        if (!currentUsername) {
+          setLoginStatus('계정 이름을 불러오지 못했습니다. 잠시 후 다시 로그인해주세요.', 'fail');
+          return;
+        }
+        localStorage.setItem('game_username_v8', currentUsername);
+
+        // Firestore에 잘못된 u_... 값이 들어간 경우에만 실제 게임 아이디로 교정합니다.
+        if (isInternalAuthName(savedUsername) && currentUsername) {
+          try {
+            await window.firebaseGame.setDoc(
+              window.firebaseGame.doc(window.firebaseGame.firebaseDb, 'players', user.uid),
+              { username: currentUsername, updatedAt: Date.now() },
+              { merge: true }
+            );
+          } catch (e) {
+            console.warn('사용자 이름 교정 저장 실패:', e);
+          }
+        }
+        onlineUserEl.textContent = `로그인: ${currentUsername}`;
+        loginOverlay.style.display = 'none';
+
+        // 계정별 온라인 데이터를 사용합니다.
+        // 다른 계정의 localStorage 게임 상태를 절대로 초기 상태로 사용하지 않습니다.
+        playerJob = null;
+        currentLevel = 1;
+        coins = 1000;
+        winCount = 0;
+        isAdminUnlocked = false;
+        btnChangeJob.style.display = 'none';
+        btnAddCoins.style.display = 'none';
+
+        const hadOnlineData = await loadOnlineData();
+
+        if (hadOnlineData === null) {
+          // Firestore 오류일 때 기존 계정 데이터를 기본값으로 덮어쓰지 않습니다.
+          setLoginStatus('온라인 데이터를 불러오지 못했습니다. 인터넷/Firebase 상태를 확인해주세요.', 'fail');
+          return;
+        }
+
+        if (!hadOnlineData) {
+          // 완전히 새로운 계정만 35,000G로 시작합니다.
+          // 기존 계정의 코인/직업/강화 데이터에는 영향을 주지 않습니다.
+          coins = STARTING_GOLD;
+          await saveOnlineData();
+          localStorage.setItem('game_coins_v8', coins);
+        }
+
+        if (playerJob) {
+          drawSection.style.display = 'none';
+          mainGame.style.display = 'block';
+        } else {
+          drawSection.style.display = 'block';
+          mainGame.style.display = 'none';
+        }
+        renderUI();
+      });
+    }
+    window.addEventListener('firebase-ready', initFirebaseAuth);
+
+    window.addEventListener('firebase-error', e => {
+      console.error('Firebase 오류:', e.detail?.message || '알 수 없는 오류');
+      setLoginStatus('Firebase 연결 실패: ' + (window.firebaseInitError || '알 수 없는 오류') + ' (콘솔에도 상세 오류가 표시됩니다.)', 'fail');
+    });
+
+    // 로딩 완료 여부와 관계없이 초기화 Promise를 기준으로 인증 상태 감시를 시작합니다.
+    if (window.firebaseInitPromise) {
+      window.firebaseInitPromise.then(ok => {
+        if (ok) initFirebaseAuth();
+      });
+    } else if (window.firebaseGame) {
+      initFirebaseAuth();
+    }
+
+  </script>
+</body>
+</html      } finally {
+        btnLogin.disabled = btnSignup.disabled = false;
+      }
+>
