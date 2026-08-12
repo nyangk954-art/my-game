@@ -924,7 +924,7 @@ function calculateFireSwordBonusDamage(level, baseDamage, rng = Math.random()) {
       const savedLevel = localStorage.getItem('assigned_job_level_v8');
       const savedRank = localStorage.getItem('assigned_job_rank_v8');
       // 관리자 권한은 새로고침/재접속 때 절대 유지하지 않습니다.
-      // 반드시 현재 화면에서 관리자 코드를 다시 입력해야 합니다.
+      // 반드시 현재 화면에서 관리자 인증를 다시 입력해야 합니다.
       localStorage.removeItem('admin_mode_unlocked_v8');
       localStorage.removeItem('assigned_job_rank_v8');
       isAdminUnlocked = false;
@@ -932,7 +932,7 @@ function calculateFireSwordBonusDamage(level, baseDamage, rng = Math.random()) {
 
       if (savedWins) winCount = parseInt(savedWins, 10);
 
-      // 관리자 버튼은 관리자 코드 인증 전에는 항상 숨깁니다.
+      // 관리자 버튼은 관리자 인증 인증 전에는 항상 숨깁니다.
       btnChangeJob.style.display = 'none';
       btnAddCoins.style.display = 'none';
       if (currentUsername) onlineUserEl.textContent = `로그인: ${currentUsername}`;
@@ -1007,7 +1007,7 @@ function calculateFireSwordBonusDamage(level, baseDamage, rng = Math.random()) {
 
     btnAdminSubmit.addEventListener('click', () => {
       const inputCode = adminCodeInput.value.trim();
-      if (inputCode === 'wejhrweiroiweuori123') {
+      if (currentUser && currentUser.uid === 'lIjTbRZYMMY8xXjdKqyqqHkDhGw1') {
         adminCodeInput.value = '';
         showToast('🔑 관리자 권한 승인', '<b>관리자 기능이 모두 활성화되었습니다!</b>', '직업 변경 및 만코인 지급 버튼이 추가됩니다.', () => {
           isAdminUnlocked = true;
@@ -1017,7 +1017,7 @@ function calculateFireSwordBonusDamage(level, baseDamage, rng = Math.random()) {
         });
       } else {
         logEl.className = 'log fail';
-        logEl.textContent = '❌ 유효하지 않은 관리자 코드입니다.';
+        logEl.textContent = '❌ 유효하지 않은 관리자 인증입니다.';
       }
     });
 
@@ -2087,10 +2087,43 @@ applyDamageToUnit(bEnemy, dmg);
         showToast(isWin ? '🏆 친선전 승리!' : '💀 친선전 패배!', isWin ? '상대를 쓰러뜨렸습니다!' : '전투에서 패배했습니다.', '친선전에서는 코인과 승수를 지급하지 않습니다.', () => { battleScreen.style.display='none'; isProcessingTurn=false; friendlyMode=false; if(friendlyPollTimer){clearInterval(friendlyPollTimer);friendlyPollTimer=null;} });
         return;
       }
-      let reward = 0;
+      const ENHANCE_REWARDS = {
+        0: 0,
+        1: 2000,
+        2: 4000,
+        3: 7000,
+        4: 11000,
+        5: 16000,
+        6: 22000,
+        7: 30000,
+        8: 40000,
+        9: 52000,
+        10: 67000,
+        11: 85000,
+        12: 105000,
+        13: 130000,
+        14: 160000,
+        15: 200000,
+        16: 250000,
+        17: 310000,
+        18: 380000,
+        19: 460000,
+        20: 550000,
+        21: 660000,
+        22: 790000,
+        23: 950000,
+        24: 1150000,
+        25: 1400000
+      };
+
+      const level = Math.max(1, Math.min(25, Math.floor(Number(currentLevel) || 1)));
+      let reward;
+
       if (isWin) {
+        const baseReward = 5000 + (level * 100);
+        const enhanceBonus = ENHANCE_REWARDS[level] || 0;
+        reward = baseReward + enhanceBonus;
         winCount++;
-        reward = 5000 + (currentLevel * 100);
         coins += reward;
         showToast(`🏆 승리하였습니다!`, `보상: <span style="color:#f1c40f; font-size:1.3rem;">+${reward.toLocaleString()} G</span>`, '', finish);
       } else {
@@ -2305,7 +2338,4 @@ applyDamageToUnit(bEnemy, dmg);
 
   </script>
 </body>
-</html      } finally {
-        btnLogin.disabled = btnSignup.disabled = false;
-      }
->
+</html>
